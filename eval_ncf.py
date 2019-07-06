@@ -79,6 +79,7 @@ if __name__ == '__main__':
     # construct the model
     net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
                     model_layers, num_hidden, max_user, max_movies, sparse)
+    net = net.get_backend_symbol("MKLDNN")
     # initialize the module
     mod = mx.module.Module(net, context=ctx, data_names=['user', 'item'], label_names=['softmax_label'])
     mod.bind(for_training=False, data_shapes=val_iter.provide_data, label_shapes=val_iter.provide_label)
