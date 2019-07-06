@@ -6,7 +6,8 @@ import numpy as np
 import mxnet as mx
 
 def get_dataset(data_dir, num_train = 19000000, batch_size = 25000):
-    if not os.path.exists('ml-20m.zip'):
+    if not os.path.exists(data_dir + 'ml-20m.zip'):
+        os.mkdir(data_dir)
         urllib.request.urlretrieve('http://files.grouplens.org/datasets/movielens/ml-20m.zip', data_dir + 'ml-20m.zip')
     with zipfile.ZipFile(data_dir + "ml-20m.zip", "r") as f:
         f.extractall(data_dir + "./")
@@ -35,3 +36,4 @@ def get_dataset(data_dir, num_train = 19000000, batch_size = 25000):
                                label=valid_ratings, batch_size=batch_size)
     
     return X_train, X_eval, max_users, max_items
+
