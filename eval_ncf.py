@@ -22,13 +22,16 @@ import logging
 import mxnet as mx
 from data import get_dataset
 from model import get_model
+from evaluate import evaluate_model, get_eval_iters
 
 logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser(description="Run matrix factorization with sparse embedding",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--path', nargs='?', default='./data/',
-                    help='Input data path.')                                
+                    help='Input data path.')
+parser.add_argument('--dataset', nargs='?', default='ml-1m',
+                    help='The dataset name.')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed')
 parser.add_argument('--batch-size', type=int, default=256,
@@ -50,7 +53,10 @@ parser.add_argument('--num-hidden', type=int, default=1,
 parser.add_argument('--gpus', type=str,
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
 parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
-parser.add_argument('--ckt-index', type=int, default=2, help='model checkpoint index for inference')
+parser.add_argument('--evaluate', action='store_true', help="whether to evaluate accuracy")
+parser.add_argument('--epoch', type=int, default=2, help='model checkpoint index for inference')
+parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
+parser.add_argument('--prefix', default='checkpoint', help="mdoel prefix for deployment")
 
 
 if __name__ == '__main__':
@@ -74,28 +80,52 @@ if __name__ == '__main__':
 
     # prepare dataset and iterators
     logging.info('Prepare Dataset')
-    train_iter, val_iter, max_user, max_movies = get_dataset(args.path, num_train = 19000000, batch_size = batch_size)
+    # prepare dataset and iterators
+    # train_iter, val_iter, max_user, max_movies = get_dataset(args.path, num_train = 19000000, batch_size = batch_size)
+    data = Dataset(args.path + args.dataset)
+    testRatings, testNegatives, testRatingsuser, testRatingsitem = data.testRatings, data.testNegatives, data.testRatingsuser, data.testRatingsitem
+    val_iter = get_eval_iters(testRatingsuser, testRatingsitem, batch_size)
+    max_user, max_movies = train.shape
+    logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
+                 %(max_user, max_movies, train.nnz, len(testRatings)))
     logging.info('Prepare Dataset completed')
     # construct the model
-    net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
-                    model_layers, num_hidden, max_user, max_movies, sparse)
-    net = net.get_backend_symbol("MKLDNN")
+    if args.deploy:
+        net, arg_params, aux_params = mx.sym.load_checkpoint(args.prefix, args.epoch)
+    else:
+        net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
+                        model_layers, num_hidden, max_user, max_movies, sparse)
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        model_path = os.path.join(dir_path, 'model', args.dataset)
+        save_dict = nd.load_params(model_path + "/checkpoint" + "-%04d.params" % args.epoch)
+        arg_params = {}
+        aux_params = {}
+        for k, v in save_dict.items():
+            tp, name = k.split(':', 1)
+            if tp == 'arg':
+                arg_params[name] = v
+            if tp == 'aux':
+                aux_params[name] = v
+    if ctx == mx.cpu():
+        net = net.get_backend_symbol("MKLDNN")
+
     # initialize the module
     mod = mx.module.Module(net, context=ctx, data_names=['user', 'item'], label_names=['softmax_label'])
     mod.bind(for_training=False, data_shapes=val_iter.provide_data, label_shapes=val_iter.provide_label)
-    mod.init_params(initializer=mx.init.Xavier(factor_type="in", magnitude=2.34))
-    logging.info('Inference...')
-    tic = time.time()
-    num_samples = 0
-    for batch in val_iter:
-        mod.forward(batch, is_train=False)
-        num_samples += batch_size
-    toc = time.time()
-    fps = num_samples/(toc - tic)
-    logging.info('Evaluating completed')
-    logging.info('Inference speed %.4f fps' % fps)
+    mod.set_params(arg_params, aux_params)
 
-    # (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
-    # hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
-    # print('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
-
+    if args.evaluate:
+        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
+        hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
+        logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
+    else:
+        logging.info('Inference...')
+        tic = time.time()
+        num_samples = 0
+        for batch in val_iter:
+            mod.forward(batch, is_train=False)
+            num_samples += batch_size
+        toc = time.time()
+        fps = num_samples/(toc - tic)
+        logging.info('Evaluating completed')
+        logging.info('Inference speed %.4f fps' % fps)
