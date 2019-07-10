@@ -133,7 +133,7 @@ if __name__ == '__main__':
     mod.set_params(arg_params, aux_params)
 
     if args.evaluate:
-        (hits, ndcgs) = evaluate_model(mod, testRatings[0:100], testNegatives[0:100], topK, evaluation_threads)
+        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
     else:
