@@ -43,6 +43,8 @@ parser.add_argument('--log-interval', type=int, default=100,
                     help='logging interval')
 parser.add_argument('--num-neg', type=int, default=4,
                     help='Number of negative instances to pair with a positive instance.')
+parser.add_argument('--num-valid', type=int, default=1000,
+                    help='Number of validation examples to validate per training epoch.')
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
 parser.add_argument('--layers', type=list, default=[256, 128, 64],
@@ -100,6 +102,7 @@ if __name__ == '__main__':
     
     num_epoch = args.num_epoch
     num_negatives = args.num_neg
+    num_valid = args.num_valid
     batch_size = args.batch_size
     model_type = args.model_type
     factor_size_mlp = args.factor_size_mlp
@@ -172,7 +175,7 @@ if __name__ == '__main__':
             os.makedirs(model_path)
         mod.save_checkpoint(model_path + "/checkpoint", epoch, save_optimizer_states=True)
         # compute hit ratio
-        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
+        (hits, ndcgs) = evaluate_model(mod, testRatings[0:num_valid], testNegatives[0:num_valid], topK, evaluation_threads)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         
         logging.info('Iteration %d: HR = %.4f, NDCG = %.4f'  % (epoch, hr, ndcg))
