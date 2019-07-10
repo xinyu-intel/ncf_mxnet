@@ -47,10 +47,8 @@ parser.add_argument('--num-valid', type=int, default=1000,
                     help='Number of validation examples to validate per training epoch.')
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
-parser.add_argument('--layers', type=list, default=[256, 128, 64],
+parser.add_argument('--layers', default='[256, 128, 64]',
                     help="list of number hiddens of fc layers in mlp model.")
-parser.add_argument('--factor-size-mlp', type=int, default=128,
-                    help="outdim of mlp embedding layers.")
 parser.add_argument('--factor-size-gmf', type=int, default=64,
                     help="outdim of gmf embedding layers.")
 parser.add_argument('--num-hidden', type=int, default=1,
@@ -105,9 +103,9 @@ if __name__ == '__main__':
     num_valid = args.num_valid
     batch_size = args.batch_size
     model_type = args.model_type
-    factor_size_mlp = args.factor_size_mlp
+    model_layers = eval(args.layers)
     factor_size_gmf = args.factor_size_gmf
-    model_layers = args.layers
+    factor_size_mlp = int(model_layers[0]/2)
     num_hidden = args.num_hidden
     sparse = args.sparse
     log_interval = args.log_interval
