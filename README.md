@@ -68,7 +68,7 @@ python train_ncf.py --dataset='ml-20m' --factor-size-gmf=64 --model-type='gmf'
 python train_ncf.py --dataset='ml-20m' --layers=[256, 128, 64] --model-type='mlp'
 ```
 
-## inference
+## Inference
 
 ```
 # neumf inference on ml-20m dataset
