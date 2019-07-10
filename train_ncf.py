@@ -16,20 +16,18 @@
 # under the License.
 # 
 import os
-import sys
 import time
 import argparse
 import logging
 import numpy as np
 import mxnet as mx
-#from data import get_dataset
 from model import get_model
 from Dataset import Dataset
 from evaluate import evaluate_model
 
 logging.basicConfig(level=logging.DEBUG)
 
-parser = argparse.ArgumentParser(description="Run matrix factorization with sparse embedding",
+parser = argparse.ArgumentParser(description="Run matrix factorization with embedding",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--path', nargs='?', default='./data/',
                     help='Input data path.')
@@ -43,15 +41,15 @@ parser.add_argument('--batch-size', type=int, default=256,
                     help='number of examples per batch')
 parser.add_argument('--log-interval', type=int, default=100,
                     help='logging interval')
-parser.add_argument('--num_neg', type=int, default=4,
+parser.add_argument('--num-neg', type=int, default=4,
                     help='Number of negative instances to pair with a positive instance.')
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
 parser.add_argument('--layers', type=list, default=[256, 128, 64],
                     help="list of number hiddens of fc layers in mlp model.")
-parser.add_argument('--factor_size_mlp', type=int, default=128,
+parser.add_argument('--factor-size-mlp', type=int, default=128,
                     help="outdim of mlp embedding layers.")
-parser.add_argument('--factor_size_gmf', type=int, default=64,
+parser.add_argument('--factor-size-gmf', type=int, default=64,
                     help="outdim of gmf embedding layers.")
 parser.add_argument('--num-hidden', type=int, default=1,
                     help="num-hidden of neumf fc layer")
@@ -120,7 +118,6 @@ if __name__ == '__main__':
     evaluation_threads = 1
 
     # prepare dataset and iterators
-    # train_iter, val_iter, max_user, max_movies = get_dataset(args.path, num_train = 19000000, batch_size = batch_size)
     data = Dataset(args.path + args.dataset)
     train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
     max_user, max_movies = train.shape

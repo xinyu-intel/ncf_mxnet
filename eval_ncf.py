@@ -19,34 +19,29 @@ import os
 import time
 import argparse
 import logging
+import numpy as np
 import mxnet as mx
-from data import get_dataset
+from Dataset import Dataset
 from model import get_model
-from evaluate import evaluate_model, get_eval_iters
+from evaluate import evaluate_model
 
 logging.basicConfig(level=logging.DEBUG)
 
-parser = argparse.ArgumentParser(description="Run matrix factorization with sparse embedding",
+parser = argparse.ArgumentParser(description="Run matrix factorization with embedding",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--path', nargs='?', default='./data/',
                     help='Input data path.')
-parser.add_argument('--dataset', nargs='?', default='ml-1m',
+parser.add_argument('--dataset', nargs='?', default='ml-20m',
                     help='The dataset name.')
-parser.add_argument('--seed', type=int, default=1,
-                    help='random seed')
 parser.add_argument('--batch-size', type=int, default=256,
                     help='number of examples per batch')
-parser.add_argument('--log-interval', type=int, default=100,
-                    help='logging interval')
-parser.add_argument('--num_neg', type=int, default=4,
-                    help='Number of negative instances to pair with a positive instance.')
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
 parser.add_argument('--layers', type=list, default=[256, 128, 64],
                     help="list of number hiddens of fc layers in mlp model.")
-parser.add_argument('--factor_size_mlp', type=int, default=128,
+parser.add_argument('--factor-size-mlp', type=int, default=128,
                     help="outdim of mlp embedding layers.")
-parser.add_argument('--factor_size_gmf', type=int, default=64,
+parser.add_argument('--factor-size-gmf', type=int, default=64,
                     help="outdim of gmf embedding layers.")
 parser.add_argument('--num-hidden', type=int, default=1,
                     help="num-hidden of neumf fc layer")
@@ -54,10 +49,37 @@ parser.add_argument('--gpus', type=str,
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
 parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
 parser.add_argument('--evaluate', action='store_true', help="whether to evaluate accuracy")
-parser.add_argument('--epoch', type=int, default=2, help='model checkpoint index for inference')
+parser.add_argument('--epoch', type=int, default=0, help='model checkpoint index for inference')
 parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
 parser.add_argument('--prefix', default='checkpoint', help="mdoel prefix for deployment")
 
+def get_movielens_iter(filename, batch_size, logger):
+    """Not particularly fast code to parse the text file and load into NDArrays.
+    return two data iters, one for train, the other for validation.
+    """
+    logger.info("Preparing data iterators for " + filename + " ... ")
+    user = []
+    item = []
+    score = []
+    with open(filename, 'r') as f:
+        num_samples = 0
+        for line in f:
+            tks = line.strip().split('\t')
+            if len(tks) != 3:
+                continue
+            num_samples += 1
+            user.append((tks[0]))
+            item.append((tks[1]))
+            score.append((tks[2]))
+    # convert to ndarrays
+    user = mx.nd.array(user, dtype='int32')
+    item = mx.nd.array(item)
+    score = mx.nd.array(score)
+    # prepare data iters
+    data = {'user': user, 'item': item}
+    label = {'softmax_label': score}
+    iter = mx.io.NDArrayIter(data=data, label=label, batch_size=batch_size)
+    return iter
 
 if __name__ == '__main__':
     head = '%(asctime)-15s %(message)s'
@@ -80,14 +102,12 @@ if __name__ == '__main__':
 
     # prepare dataset and iterators
     logging.info('Prepare Dataset')
-    # prepare dataset and iterators
-    # train_iter, val_iter, max_user, max_movies = get_dataset(args.path, num_train = 19000000, batch_size = batch_size)
     data = Dataset(args.path + args.dataset)
-    testRatings, testNegatives, testRatingsuser, testRatingsitem = data.testRatings, data.testNegatives, data.testRatingsuser, data.testRatingsitem
-    val_iter = get_eval_iters(testRatingsuser, testRatingsitem, batch_size)
+    train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
+    val_iter = get_movielens_iter(args.path + args.dataset + '.test.rating', batch_size, logger=logging)
     max_user, max_movies = train.shape
     logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
-                 %(max_user, max_movies, train.nnz, len(testRatings)))
+                 %(max_user, max_movies, len(testRatings)))
     logging.info('Prepare Dataset completed')
     # construct the model
     if args.deploy:
@@ -97,7 +117,7 @@ if __name__ == '__main__':
                         model_layers, num_hidden, max_user, max_movies, sparse)
         dir_path = os.path.dirname(os.path.realpath(__file__))
         model_path = os.path.join(dir_path, 'model', args.dataset)
-        save_dict = nd.load_params(model_path + "/checkpoint" + "-%04d.params" % args.epoch)
+        save_dict = mx.nd.load(model_path + "/checkpoint" + "-%04d.params" % args.epoch)
         arg_params = {}
         aux_params = {}
         for k, v in save_dict.items():
@@ -115,7 +135,7 @@ if __name__ == '__main__':
     mod.set_params(arg_params, aux_params)
 
     if args.evaluate:
-        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
+        (hits, ndcgs) = evaluate_model(mod, testRatings[0:100], testNegatives[0:100], topK, evaluation_threads)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
     else:
