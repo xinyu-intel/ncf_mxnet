@@ -1,12 +1,20 @@
-'''
-Created on Apr 15, 2016
-Evaluate the performance of Top-K recommendation:
-    Protocol: leave-1-out evaluation
-    Measures: Hit Ratio and NDCG
-    (more details are in: Xiangnan He, et al. Fast Matrix Factorization for Online Recommendation with Implicit Feedback. SIGIR'16)
-
-@author: hexiangnan
-'''
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# 
 import math
 import heapq
 import multiprocessing
@@ -25,7 +33,7 @@ def get_eval_iters(user, item, batch_size):
     data_eval = {'user': user, 'item': item}
     label = np.zeros(len(item))
     iter_eval = mx.io.NDArrayIter(data=data_eval,label=label,
-                                   batch_size=batch_size, shuffle=False) #!!!!
+                                   batch_size=batch_size, shuffle=False)
     return iter_eval
 
 def evaluate_model(model, testRatings, testNegatives, K, num_thread):
