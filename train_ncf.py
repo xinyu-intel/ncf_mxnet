@@ -112,7 +112,7 @@ if __name__ == '__main__':
     sparse = args.sparse
     log_interval = args.log_interval
 
-    ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else [mx.cpu()]
+    ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
     optimizer = 'sgd'
     learning_rate = 0.1
     mx.random.seed(args.seed)
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         model_path = os.path.join(dir_path, 'model', args.dataset)
         if not os.path.exists(model_path):
             os.makedirs(model_path)
-        mod.save_checkpoint(model_path + "/checkpoint", epoch, save_optimizer_states=True)
+        mod.save_checkpoint(os.path.join(model_path, model_type), epoch)
         # compute hit ratio
         (hits, ndcgs) = evaluate_model(mod, testRatings[0:num_valid], testNegatives[0:num_valid], topK, evaluation_threads)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()

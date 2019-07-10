@@ -96,7 +96,7 @@ if __name__ == '__main__':
     model_layers = args.layers
     num_hidden = args.num_hidden
     sparse = args.sparse
-    ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else [mx.cpu()]
+    ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
     topK = 10
     evaluation_threads = 1#mp.cpu_count()
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                         model_layers, num_hidden, max_user, max_movies, sparse)
         dir_path = os.path.dirname(os.path.realpath(__file__))
         model_path = os.path.join(dir_path, 'model', args.dataset)
-        save_dict = mx.nd.load(model_path + "/checkpoint" + "-%04d.params" % args.epoch)
+        save_dict = mx.nd.load(os.path.join(model_path, model_type) + "-%04d.params" % args.epoch)
         arg_params = {}
         aux_params = {}
         for k, v in save_dict.items():
