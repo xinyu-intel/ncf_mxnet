@@ -50,34 +50,34 @@ Currently doesn't support train neumf model with pre-trained gmf and mlp model.
 
 ```
 # train neumf on ml-1m dataset
-python train_ncf.py --dataset='ml-1m' --layers=[64,32,16,8] --factor-size-gmf=8
+python train_ncf.py --dataset='ml-1m' --layers='[64,32,16,8]' --factor-size-gmf=8
 # train gmf on ml-1m dataset
 python train_ncf.py --dataset='ml-1m' --factor-size-gmf=8 --model-type='gmf'
 # train mlp on ml-1m dataset
-python train_ncf.py --dataset='ml-1m' --layers=[64,32,16,8] --model-type='mlp'
+python train_ncf.py --dataset='ml-1m' --layers='[64,32,16,8]' --model-type='mlp'
 ```
 
 ### ml-20m
 
 ```
 # train neumf on ml-20m dataset
-python train_ncf.py --dataset='ml-20m' --layers=[256, 128, 64] --factor-size-gmf=64
+python train_ncf.py --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64
 # train gmf on ml-20m dataset
 python train_ncf.py --dataset='ml-20m' --factor-size-gmf=64 --model-type='gmf'
 # train mlp on ml-20m dataset
-python train_ncf.py --dataset='ml-20m' --layers=[256, 128, 64] --model-type='mlp'
+python train_ncf.py --dataset='ml-20m' --layers='[256, 128, 64]' --model-type='mlp'
 ```
 
 ## Inference
 
 ```
 # neumf inference on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers=[256, 128, 64] --factor-size-gmf=64 --epoch=0
+python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=0
 ```
 
 ## Evaluate Accuracy
 
 ```
 # evaluate neumf accuracy on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers=[256, 128, 64] --factor-size-gmf=64 --epoch=0 --evaluate 
+python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=0 --evaluate 
 ```
