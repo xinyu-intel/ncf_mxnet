@@ -100,12 +100,13 @@ if __name__ == '__main__':
 
     # prepare dataset and iterators
     logging.info('Prepare Dataset')
-    data = Dataset(args.path + args.dataset)
-    train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
+    if not args.deploy and arg.evaluate:
+        data = Dataset(args.path + args.dataset)
+        train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
+        max_user, max_movies = train.shape
+        logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
+                    %(max_user, max_movies, len(testRatings)))
     val_iter = get_movielens_iter(args.path + args.dataset + '.test.rating', batch_size, logger=logging)
-    max_user, max_movies = train.shape
-    logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
-                 %(max_user, max_movies, len(testRatings)))
     logging.info('Prepare Dataset completed')
     # construct the model
     if args.deploy:

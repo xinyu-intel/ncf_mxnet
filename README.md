@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 ## Dataset
 
-We provide two processed datasets on [Google Drive](https://drive.google.com/drive/folders/1qACR_Zhc2O2W0RrazzcepM2vJeh0MMdO?usp=sharing): MovieLens 1 Million (ml-1m) and MovieLens 20 Million (ml-20m).
+We provide two processed datasets on [Google Drive](https://drive.google.com/drive/folders/1qACR_Zhc2O2W0RrazzcepM2vJeh0MMdO?usp=sharing): MovieLens 20 Million (ml-20m).
 
 train.rating: 
 - Train file.
@@ -45,17 +45,6 @@ python convert.py --dataset='ml-20m' --negative-num=99
 ## Training
 
 Currently doesn't support train neumf model with pre-trained gmf and mlp model.
-
-### ml-1m
-
-```
-# train neumf on ml-1m dataset
-python train_ncf.py --dataset='ml-1m' --layers='[64,32,16,8]' --factor-size-gmf=8
-# train gmf on ml-1m dataset
-python train_ncf.py --dataset='ml-1m' --factor-size-gmf=8 --model-type='gmf'
-# train mlp on ml-1m dataset
-python train_ncf.py --dataset='ml-1m' --layers='[64,32,16,8]' --model-type='mlp'
-```
 
 ### ml-20m
 
