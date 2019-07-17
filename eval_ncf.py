@@ -106,7 +106,7 @@ if __name__ == '__main__':
         max_user, max_movies = train.shape
         logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
                     %(max_user, max_movies, len(testRatings)))
-    val_iter = get_movielens_iter(args.path + args.dataset + '.test.rating', batch_size, logger=logging)
+    val_iter = get_movielens_iter(args.path + args.dataset + '.train.rating', batch_size, logger=logging)
     logging.info('Prepare Dataset completed')
     # construct the model
     if args.deploy:
