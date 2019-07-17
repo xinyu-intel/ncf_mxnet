@@ -52,7 +52,7 @@ class Dataset(object):
             while line != None and line != "":
                 arr = line.split("\t")
                 user, item = int(arr[0]), int(arr[1])
-                item = np.argwhere(self.unique_item==item)[0][0]+1
+                item = np.argwhere(self.unique_item==item)[0][0]
                 ratingList.append([user, item])
                 line = f.readline()
         return ratingList
@@ -79,13 +79,13 @@ class Dataset(object):
         num_users = np.unique(self.data_raw['userId']).shape[0] #138493
         num_items = np.unique(self.data_raw['movieId']).shape[0] #26744
         # Construct matrix
-        mat = sp.dok_matrix((num_users+1, num_items+1), dtype=np.float32)
+        mat = sp.dok_matrix((num_users, num_items), dtype=np.float32)
         with open(filename, "r") as f:
             line = f.readline()
             while line != None and line != "":
                 arr = line.split("\t")
                 user, item, rating = int(arr[0]), int(arr[1]), float(arr[2])
-                item_index = np.argwhere(self.unique_item==item)[0][0]+1
+                item_index = np.argwhere(self.unique_item==item)[0][0]
                 if (rating > 0):
                     mat[user, item_index] = 1.0
                 line = f.readline()    

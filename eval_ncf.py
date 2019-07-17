@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     # prepare dataset and iterators
     logging.info('Prepare Dataset')
-    if not args.deploy and arg.evaluate:
+    if not args.deploy and args.evaluate:
         data = Dataset(args.path + args.dataset)
         train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
         max_user, max_movies = train.shape
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     logging.info('Prepare Dataset completed')
     # construct the model
     if args.deploy:
-        net, arg_params, aux_params = mx.sym.load_checkpoint(args.prefix, args.epoch)
+        net, arg_params, aux_params = mx.model.load_checkpoint(args.prefix, args.epoch)
     else:
         net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
                         model_layers, num_hidden, max_user, max_movies, sparse)
