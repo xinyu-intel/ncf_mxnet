@@ -61,12 +61,12 @@ python train_ncf.py --dataset='ml-20m' --layers='[256, 128, 64]' --model-type='m
 
 ```
 # neumf inference on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=0
+python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --deploy --prefix=./model/ml-20m/neumf
 ```
 
 ## Evaluate Accuracy
 
 ```
 # evaluate neumf accuracy on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=0 --evaluate 
+python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --evaluate 
 ```
