@@ -143,6 +143,7 @@ if __name__ == '__main__':
         num_samples = 0
         for batch in val_iter:
             mod.forward(batch, is_train=False)
+            mx.nd.waitall()
             num_samples += batch_size
         toc = time.time()
         fps = num_samples/(toc - tic)
