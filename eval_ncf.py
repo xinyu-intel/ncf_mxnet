@@ -24,6 +24,7 @@ import mxnet as mx
 from Dataset import Dataset
 from model import get_model
 from evaluate import evaluate_model
+from mxnet.contrib.quantization import *
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -50,6 +51,25 @@ parser.add_argument('--evaluate', action='store_true', help="whether to evaluate
 parser.add_argument('--epoch', type=int, default=0, help='model checkpoint index for inference')
 parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
 parser.add_argument('--prefix', default='checkpoint', help="mdoel prefix for deployment")
+parser.add_argument('--calibration', action='store_true', help="whether to calibrate model")
+parser.add_argument('--calib-mode', type=str, default='naive',
+                    help='calibration mode used for generating calibration table for the quantized symbol; supports'
+                            ' 1. none: no calibration will be used. The thresholds for quantization will be calculated'
+                            ' on the fly. This will result in inference speed slowdown and loss of accuracy'
+                            ' in general.'
+                            ' 2. naive: simply take min and max values of layer outputs as thresholds for'
+                            ' quantization. In general, the inference accuracy worsens with more examples used in'
+                            ' calibration. It is recommended to use `entropy` mode as it produces more accurate'
+                            ' inference results.'
+                            ' 3. entropy: calculate KL divergence of the fp32 output and quantized output for optimal'
+                            ' thresholds. This mode is expected to produce the best inference accuracy of all three'
+                            ' kinds of quantized models if the calibration dataset is representative enough of the'
+                            ' inference dataset.')
+parser.add_argument('--quantized-dtype', type=str, default='auto',
+                    choices=['auto', 'int8', 'uint8'],
+                    help='quantization destination data type for input data')
+parser.add_argument('--num-calib-batches', type=int, default=10,
+                    help='number of batches for calibration')
 
 def get_movielens_iter(filename, batch_size, logger):
     """Not particularly fast code to parse the text file and load into NDArrays.
@@ -94,6 +114,9 @@ if __name__ == '__main__':
     factor_size_mlp = int(model_layers[0]/2)
     num_hidden = args.num_hidden
     sparse = args.sparse
+    calib_mode = args.calib_mode
+    quantized_dtype = args.quantized_dtype
+    num_calib_batches = args.num_calib_batches
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
     topK = 10
     evaluation_threads = 1#mp.cpu_count()
@@ -133,19 +156,44 @@ if __name__ == '__main__':
     mod.bind(for_training=False, data_shapes=val_iter.provide_data, label_shapes=val_iter.provide_label)
     mod.set_params(arg_params, aux_params)
 
-    if args.evaluate:
-        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
-        hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
-        logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
+    if args.calibration:
+        excluded_sym_names = []
+        logging.info('Quantizing FP32 model')
+        if calib_mode == 'none':
+            qsym, qarg_params, aux_params = quantize_model(sym=net, arg_params=arg_params, aux_params=aux_params,
+                                                        ctx=ctx, excluded_sym_names=excluded_sym_names,
+                                                        calib_mode=calib_mode, quantized_dtype=quantized_dtype,
+                                                        logger=logging)
+            sym_name = '%s-symbol.json' % (args.prefix + '-quantized')
+        else:
+            qsym, qarg_params, aux_params = quantize_model(sym=net, arg_params=arg_params, aux_params=aux_params,
+                                                            ctx=ctx, excluded_sym_names=excluded_sym_names,
+                                                            calib_mode=calib_mode, calib_data=val_iter,
+                                                            num_calib_examples=num_calib_batches * batch_size,
+                                                            calib_layer=None, quantized_dtype=args.quantized_dtype,
+                                                            data_names=['user', 'item'], label_names=('softmax_label',),
+                                                            logger=logging)
+            sym_name = '%s-symbol.json' % (args.prefix + '-quantized')
+        qsym = qsym.get_backend_symbol('MKLDNN_QUANTIZE')
+        qsym.save(sym_name)
+        param_name = '%s-%04d.params' % (args.prefix + '-quantized', args.epoch)
+        save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu()) for k, v in qarg_params.items()}
+        save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
+        mx.nd.save(param_name, save_dict)
     else:
-        logging.info('Inference...')
-        tic = time.time()
-        num_samples = 0
-        for batch in val_iter:
-            mod.forward(batch, is_train=False)
-            mx.nd.waitall()
-            num_samples += batch_size
-        toc = time.time()
-        fps = num_samples/(toc - tic)
-        logging.info('Evaluating completed')
-        logging.info('Inference speed %.4f fps' % fps)
+        if args.evaluate:
+            (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
+            hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
+            logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
+        else:
+            logging.info('Inference...')
+            tic = time.time()
+            num_samples = 0
+            for batch in val_iter:
+                mod.forward(batch, is_train=False)
+                mx.nd.waitall()
+                num_samples += batch_size
+            toc = time.time()
+            fps = num_samples/(toc - tic)
+            logging.info('Evaluating completed')
+            logging.info('Inference speed %.4f fps' % fps)
