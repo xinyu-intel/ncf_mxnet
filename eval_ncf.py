@@ -157,7 +157,7 @@ if __name__ == '__main__':
     mod.set_params(arg_params, aux_params)
 
     if args.calibration:
-        excluded_sym_names = []
+        excluded_sym_names = ['post_gemm_concat', 'pre_gemm_concat']
         logging.info('Quantizing FP32 model')
         if calib_mode == 'none':
             qsym, qarg_params, aux_params = quantize_model(sym=net, arg_params=arg_params, aux_params=aux_params,
