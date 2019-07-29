@@ -64,6 +64,15 @@ python train_ncf.py --dataset='ml-20m' --layers='[256, 128, 64]' --model-type='m
 python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --deploy --prefix=./model/ml-20m/neumf
 ```
 
+# Calibration
+
+```
+# neumf calibration on ml-20m dataset
+python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --deploy --prefix=./model/ml-20m/neumf --calibration
+# neumf int8 inference on ml-20m dataset
+python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --deploy --prefix=./model/ml-20m/neumf-quantized
+```
+
 ## Evaluate Accuracy
 
 ```
