@@ -149,7 +149,10 @@ if __name__ == '__main__':
             if tp == 'aux':
                 aux_params[name] = v
     if ctx == mx.cpu():
-        net = net.get_backend_symbol("MKLDNN")
+        if args.calibration:
+            net = net.get_backend_symbol('MKLDNN_QUANTIZE')
+        else:
+            net = net.get_backend_symbol('MKLDNN')
 
     # initialize the module
     mod = mx.module.Module(net, context=ctx, data_names=['user', 'item'], label_names=['softmax_label'])
