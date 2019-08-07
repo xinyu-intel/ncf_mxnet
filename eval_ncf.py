@@ -85,6 +85,8 @@ def get_movielens_iter(filename, batch_size, logger):
             tks = line.strip().split('\t')
             if len(tks) != 3:
                 continue
+            if (int(tks[0]) > 138000 or int(tks[1]) > 26700):
+                continue
             num_samples += 1
             user.append((tks[0]))
             item.append((tks[1]))
