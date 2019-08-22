@@ -52,7 +52,7 @@ class Dataset(object):
             while line != None and line != "":
                 arr = line.split("\t")
                 user, item = int(arr[0]), int(arr[1])
-                item = np.argwhere(self.unique_item==item)[0][0]
+                # item = np.argwhere(self.unique_item==item)[0][0]
                 ratingList.append([user, item])
                 line = f.readline()
         return ratingList
@@ -84,9 +84,8 @@ class Dataset(object):
             line = f.readline()
             while line != None and line != "":
                 arr = line.split("\t")
-                user, item, rating = int(arr[0]), int(arr[1]), float(arr[2])
-                item_index = np.argwhere(self.unique_item==item)[0][0]
-                if (rating > 0):
-                    mat[user, item_index] = 1.0
+                user, item = int(arr[0]), int(arr[1])
+                # item = np.argwhere(self.unique_item==item)[0][0]
+                mat[user, item] = 1.0
                 line = f.readline()    
         return mat

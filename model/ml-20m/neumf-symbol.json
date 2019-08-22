@@ -175,7 +175,10 @@
     {
       "op": "Concat", 
       "name": "post_gemm_concat", 
-      "attrs": {"num_args": "2"}, 
+      "attrs": {
+        "dim": "1", 
+        "num_args": "2"
+      }, 
       "inputs": [[6, 0, 0], [23, 0, 0]]
     }, 
     {
@@ -197,6 +200,11 @@
       "inputs": [[24, 0, 0], [25, 0, 0], [26, 0, 0]]
     }, 
     {
+      "op": "Flatten", 
+      "name": "flatten0", 
+      "inputs": [[27, 0, 0]]
+    }, 
+    {
       "op": "null", 
       "name": "softmax_label", 
       "inputs": []
@@ -204,7 +212,7 @@
     {
       "op": "LogisticRegressionOutput", 
       "name": "sigmoid_final", 
-      "inputs": [[27, 0, 0], [28, 0, 0]]
+      "inputs": [[28, 0, 0], [29, 0, 0]]
     }
   ], 
   "arg_nodes": [
@@ -222,7 +230,7 @@
     21, 
     25, 
     26, 
-    28
+    29
   ], 
   "node_row_ptr": [
     0, 
@@ -255,8 +263,9 @@
     27, 
     28, 
     29, 
-    30
+    30, 
+    31
   ], 
-  "heads": [[29, 0, 0]], 
+  "heads": [[30, 0, 0]], 
   "attrs": {"mxnet_version": ["int", 10500]}
 }

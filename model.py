@@ -67,12 +67,13 @@ def get_model(model_type='neumf', factor_size_mlp=128, factor_size_gmf=64,
                       factor_size=factor_size_gmf,
                       max_user=max_user, max_item=max_item, sparse=sparse)
 
-        net = mx.sym.concat(net_gmf, net_mlp, name='post_gemm_concat')
+        net = mx.sym.concat(net_gmf, net_mlp, dim=1, name='post_gemm_concat')
 
     else:
         raise ValueError('Unsupported ncf model %s.' % model_type)
 
     net = mx.sym.FullyConnected(data=net, num_hidden=num_hidden, name='fc_final') 
+    net = mx.sym.Flatten(data=net)  
     y_label = mx.sym.Variable('softmax_label')
     net = mx.symbol.LogisticRegressionOutput(data=net, label=y_label, name='sigmoid_final')
 
