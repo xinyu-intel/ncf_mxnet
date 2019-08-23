@@ -64,8 +64,8 @@ def evaluate_model(model, testRatings, testNegatives, K, num_thread):
         (hr,ndcg) = eval_one_rating(idx)
         hits.append(hr)
         ndcgs.append(ndcg)
-        print('\revaluate idx:{}, hr:{}'.format(idx, hr), end='')
-    print('\n')
+    #     print('\revaluate idx:{}, hr:{}'.format(idx, hr), end='')
+    # print('\n')
     return (hits, ndcgs)
 
 def eval_one_rating(idx):
