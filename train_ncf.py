@@ -53,6 +53,14 @@ parser.add_argument('--factor-size-gmf', type=int, default=64,
                     help="outdim of gmf embedding layers.")
 parser.add_argument('--num-hidden', type=int, default=1,
                     help="num-hidden of neumf fc layer")
+parser.add_argument('--learning-rate', type=float, default=0.001,
+                    help='learning rate for optimizer')
+parser.add_argument('--beta1', '-b1', type=float, default=0.9,
+                    help='beta1 for Adam')
+parser.add_argument('--beta2', '-b2', type=float, default=0.999,
+                    help='beta1 for Adam')
+parser.add_argument('--eps', type=float, default=1e-8,
+                    help='eps for Adam')
 parser.add_argument('--gpus', type=str,
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
 parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
@@ -107,12 +115,16 @@ if __name__ == '__main__':
     factor_size_gmf = args.factor_size_gmf
     factor_size_mlp = int(model_layers[0]/2)
     num_hidden = args.num_hidden
+    learning_rate=args.learning_rate
+    beta1=args.beta1
+    beta2=args.beta2
+    eps=args.eps
     sparse = args.sparse
     log_interval = args.log_interval
 
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
-    optimizer = 'sgd'
-    learning_rate = 0.1
+    # optimizer = 'sgd'
+    # learning_rate = 0.1
     mx.random.seed(args.seed)
     np.random.seed(args.seed)
     topK = 10
@@ -135,8 +147,9 @@ if __name__ == '__main__':
     mod.bind(data_shapes=train_iter.provide_data, label_shapes=train_iter.provide_label)
     mod.init_params(initializer=mx.init.Xavier(factor_type="in", magnitude=2.34))
 
-    optim = mx.optimizer.Adam()
-    mod.init_optimizer(optimizer=optim, kvstore='device')
+    # optim = mx.optimizer.Adam()
+    mod.init_optimizer(optimizer='adam', optimizer_params=[('learning_rate', learning_rate),('beta1',beta1), ('beta2',beta2), ('epsilon',eps) ], kvstore='device')
+    # mod.init_optimizer(optimizer=optim, kvstore='device')
     # use binary cross entropy as the metric
     def cross_entropy(label, pred, eps=1e-12):
         ce = 0
