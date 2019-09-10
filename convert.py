@@ -151,7 +151,7 @@ if __name__ == '__main__':
     test_data = grouped_sorted.tail(1).sort_values(by='user_id')
     # need to pop for each group
     train_data = grouped_sorted.apply(lambda x: x.iloc[:-1])
-    train_data = train_data.sort_values([USER_COLUMN, ITEM_COLUMN])
+    # train_data = train_data.sort_values([USER_COLUMN, ITEM_COLUMN])
 
     max_users, max_items = train_data.max() + 1
 
@@ -159,6 +159,7 @@ if __name__ == '__main__':
     # test_data.to_pickle(args.output + '/test_ratings.pickle')
 
     logging.info('save training dataset into %s' % (data_dir + dataset + '.train.rating'))
+    train_data.to_csv('train.rating', sep='\t', header=False, index=False)
     train_data.to_csv(data_dir + dataset + '.train.rating', sep='\t', header=False, index=False)
     logging.info('save validation dataset into %s' % (data_dir + dataset + '.test.rating'))
     test_data.to_csv(data_dir + dataset + '.test.rating', sep='\t', header=False, index=False)

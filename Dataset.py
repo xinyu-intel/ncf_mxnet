@@ -64,7 +64,7 @@ class Dataset(object):
             while line != None and line != "":
                 arr = line.split("\t")
                 negatives = []
-                for x in arr[2: ]:
+                for x in arr[1: ]:
                     negatives.append(int(x))
                 negativeList.append(negatives)
                 line = f.readline()
