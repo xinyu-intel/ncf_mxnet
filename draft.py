@@ -71,7 +71,7 @@ def evaluate_model(model, testRatings, testNegatives, K, num_valid, batch_size):
 
         predictions = model.predict(batch_iter) 
         for i in range(batch_size):
-            map_item_score=dict(zip(item[i*num_items:(i+1)*num_items],predictions[i*num_items:(i+1)*num_items]))
+            map_item_score=dict(zip(item[i*num_items:(i+1)*num_items],predictions[i*num_items:(i+1)*num_items].as_in_context(item.context)))
             ranklist = heapq.nlargest(K, map_item_score, key=map_item_score.get)
             hr = getHitRatio(ranklist, batch.label[0][i])
             ndcg = getNDCG(ranklist, batch.label[0][i])
@@ -85,27 +85,33 @@ def evaluate_model(model, testRatings, testNegatives, K, num_valid, batch_size):
 
 
 def getHitRatio(ranklist, gtItem):
-    for item in ranklist:
-        if item == gtItem:
-            return 1
+    if gtItem in ranklist:
+        return 1
     return 0
+    # for item in ranklist:
+    #     if item == gtItem:
+    #         return 1
+    # return 0
 
 def getNDCG(ranklist, gtItem):
-    for i in range(len(ranklist)):
-        item = ranklist[i]
-        if item == gtItem:
-            return math.log(2) / math.log(i+2)
+    if gtItem in ranklist:
+        return math.log(2) / math.log(ranklist.index(gtItem)+2)
     return 0
+    # for i in range(len(ranklist)):
+    #     item = ranklist[i]
+    #     if item == gtItem:
+    #         return math.log(2) / math.log(i+2)
+    # return 0
 
 if __name__ == "__main__":
-    data = Dataset('data/ml-20m')
+    data = Dataset('mini_data/ml-20m')
     train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
     train_iter = get_train_iters(train, 4, 98304)
     net, arg_params, aux_params = mx.model.load_checkpoint('model/ml-20m/neumf', 0)
     mod = mx.module.Module(net, data_names=['user', 'item'], label_names=['softmax_label'])
     mod.bind(data_shapes=train_iter.provide_data, label_shapes=train_iter.provide_label)
     mod.set_params(arg_params, aux_params)
-    evaluate_model(mod, testRatings, testNegatives, 10, 1000, 256)
+    evaluate_model(mod, testRatings, testNegatives, 10, 100, 10)
 
 
 
