@@ -47,15 +47,18 @@ def get_eval_iters(user, item, label, batch_size):
 
 def evaluate_model(model, testRatings, testNegatives, K, num_valid, batch_size):
     testUsers=[] 
+    testItems=[]
     trueRating=[] #true rating, or posivite item 
     num_items=len(testNegatives[0]) #1000
     index=random.sample(range(len(testNegatives)),num_valid) #sample num_valid examples from #test
     for i in range(len(index)):
-        _data=[testRatings[i][0]]*num_items
+        _user=[testRatings[i][0]]*num_items
+        _item=testNegatives[i]
         _label=testRatings[i][1]
-        testUsers.append(_data)
+        testUsers.append(_user)
+        testItems.append(_item)
         trueRating.append(_label)
-    eval_iter=get_eval_iters(testUsers, testNegatives, trueRating, batch_size)
+    eval_iter=get_eval_iters(testUsers, testItems, trueRating, batch_size)
     print("start evaluting...")
     hits, ndcgs = [],[]
     nbatch=0
@@ -76,7 +79,8 @@ def evaluate_model(model, testRatings, testNegatives, K, num_valid, batch_size):
             ndcgs.append(ndcg)
         nbatch+=1
         print('evaluating batch {} / {}, the length of hits is {} '.format(nbatch, math.ceil(num_valid/batch_size), len(hits)))
-    eval_iter.reset()
+    
+    
     return (hits, ndcgs)
 
 
@@ -94,14 +98,14 @@ def getNDCG(ranklist, gtItem):
     return 0
 
 if __name__ == "__main__":
-    data = Dataset('mini_data/ml-20m')
+    data = Dataset('data/ml-20m')
     train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
     train_iter = get_train_iters(train, 4, 98304)
     net, arg_params, aux_params = mx.model.load_checkpoint('model/ml-20m/neumf', 0)
     mod = mx.module.Module(net, data_names=['user', 'item'], label_names=['softmax_label'])
     mod.bind(data_shapes=train_iter.provide_data, label_shapes=train_iter.provide_label)
     mod.set_params(arg_params, aux_params)
-    evaluate_model(mod, testRatings, testNegatives, 10, 10, 5)
+    evaluate_model(mod, testRatings, testNegatives, 10, 1000, 256)
 
 
 
