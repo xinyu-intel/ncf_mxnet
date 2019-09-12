@@ -1,0 +1,177 @@
+nohup: ignoring input
+INFO:root:Namespace(batch_size=98304, beta1=0.783529, beta2=0.909003, dataset='ml-20m', eps=1.45439e-07, eval_batch_size=256, factor_size_gmf=64, gpus=None, layers='[256, 128, 64]', learning_rate=0.003821, log_interval=100, model_type='neumf', num_epoch=10, num_hidden=1, num_neg=4, num_valid=1000, path='./data/', seed=1, sparse=False)
+[19:01:34] src/executor/graph_executor.cc:1942: Subgraph backend MKLDNN is activated.
+INFO:root:Training started ...
+INFO:root:Epoch[0] Batch [0-100]	Speed: 65816.30 samples/sec	cross-entropy=3.731298
+INFO:root:Epoch[0] Batch [100-200]	Speed: 65821.26 samples/sec	cross-entropy=4.576259
+INFO:root:Epoch[0] Batch [200-300]	Speed: 65630.66 samples/sec	cross-entropy=5.086942
+INFO:root:Epoch[0] Batch [300-400]	Speed: 64053.53 samples/sec	cross-entropy=5.531692
+INFO:root:Epoch[0] Batch [400-500]	Speed: 65538.99 samples/sec	cross-entropy=5.855297
+INFO:root:Epoch[0] Batch [500-600]	Speed: 65543.45 samples/sec	cross-entropy=6.010740
+INFO:root:Epoch[0] Batch [600-700]	Speed: 65358.44 samples/sec	cross-entropy=6.173149
+INFO:root:Epoch[0] Batch [700-800]	Speed: 65599.72 samples/sec	cross-entropy=6.254937
+INFO:root:Epoch[0] Batch [800-900]	Speed: 65373.03 samples/sec	cross-entropy=6.383780
+INFO:root:Epoch[0] Batch [900-1000]	Speed: 65451.72 samples/sec	cross-entropy=6.521556
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0000.params"
+INFO:root:Iteration 0: HR = 0.4229, NDCG = 0.2198
+INFO:root:Epoch[1] Batch [0-100]	Speed: 66116.22 samples/sec	cross-entropy=6.890233
+INFO:root:Epoch[1] Batch [100-200]	Speed: 65864.42 samples/sec	cross-entropy=6.929950
+INFO:root:Epoch[1] Batch [200-300]	Speed: 65493.52 samples/sec	cross-entropy=6.962283
+INFO:root:Epoch[1] Batch [300-400]	Speed: 64719.88 samples/sec	cross-entropy=6.974371
+INFO:root:Epoch[1] Batch [400-500]	Speed: 64797.02 samples/sec	cross-entropy=7.021984
+INFO:root:Epoch[1] Batch [500-600]	Speed: 65242.87 samples/sec	cross-entropy=7.089983
+INFO:root:Epoch[1] Batch [600-700]	Speed: 67152.85 samples/sec	cross-entropy=7.122495
+INFO:root:Epoch[1] Batch [700-800]	Speed: 67310.00 samples/sec	cross-entropy=7.170479
+INFO:root:Epoch[1] Batch [800-900]	Speed: 67077.76 samples/sec	cross-entropy=7.161441
+INFO:root:Epoch[1] Batch [900-1000]	Speed: 66906.21 samples/sec	cross-entropy=7.250079
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0001.params"
+INFO:root:Iteration 1: HR = 0.4756, NDCG = 0.2456
+INFO:root:Epoch[2] Batch [0-100]	Speed: 66114.87 samples/sec	cross-entropy=7.714997
+INFO:root:Epoch[2] Batch [100-200]	Speed: 64867.97 samples/sec	cross-entropy=7.647589
+INFO:root:Epoch[2] Batch [200-300]	Speed: 64806.61 samples/sec	cross-entropy=7.642916
+INFO:root:Epoch[2] Batch [300-400]	Speed: 64691.18 samples/sec	cross-entropy=7.692243
+INFO:root:Epoch[2] Batch [400-500]	Speed: 64703.15 samples/sec	cross-entropy=7.685378
+INFO:root:Epoch[2] Batch [500-600]	Speed: 64671.69 samples/sec	cross-entropy=7.658709
+INFO:root:Epoch[2] Batch [600-700]	Speed: 64351.29 samples/sec	cross-entropy=7.688943
+INFO:root:Epoch[2] Batch [700-800]	Speed: 67128.19 samples/sec	cross-entropy=7.611765
+INFO:root:Epoch[2] Batch [800-900]	Speed: 67337.54 samples/sec	cross-entropy=7.596763
+INFO:root:Epoch[2] Batch [900-1000]	Speed: 67310.22 samples/sec	cross-entropy=7.683815
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0002.params"
+INFO:root:Iteration 2: HR = 0.4932, NDCG = 0.2479
+INFO:root:Epoch[3] Batch [0-100]	Speed: 67727.27 samples/sec	cross-entropy=8.220024
+INFO:root:Epoch[3] Batch [100-200]	Speed: 67035.96 samples/sec	cross-entropy=8.258735
+INFO:root:Epoch[3] Batch [200-300]	Speed: 64995.24 samples/sec	cross-entropy=8.187895
+INFO:root:Epoch[3] Batch [300-400]	Speed: 65299.03 samples/sec	cross-entropy=8.187120
+INFO:root:Epoch[3] Batch [400-500]	Speed: 66140.35 samples/sec	cross-entropy=8.164783
+INFO:root:Epoch[3] Batch [500-600]	Speed: 66807.31 samples/sec	cross-entropy=8.177031
+INFO:root:Epoch[3] Batch [600-700]	Speed: 65433.26 samples/sec	cross-entropy=8.145099
+INFO:root:Epoch[3] Batch [700-800]	Speed: 64414.79 samples/sec	cross-entropy=8.176043
+INFO:root:Epoch[3] Batch [800-900]	Speed: 64472.76 samples/sec	cross-entropy=8.134011
+INFO:root:Epoch[3] Batch [900-1000]	Speed: 64272.50 samples/sec	cross-entropy=8.030415
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0003.params"
+INFO:root:Iteration 3: HR = 0.4990, NDCG = 0.2425
+INFO:root:Epoch[4] Batch [0-100]	Speed: 66826.85 samples/sec	cross-entropy=8.709868
+INFO:root:Epoch[4] Batch [100-200]	Speed: 66070.74 samples/sec	cross-entropy=8.798584
+INFO:root:Epoch[4] Batch [200-300]	Speed: 65855.74 samples/sec	cross-entropy=8.895567
+INFO:root:Epoch[4] Batch [300-400]	Speed: 66046.97 samples/sec	cross-entropy=8.721571
+INFO:root:Epoch[4] Batch [400-500]	Speed: 66119.69 samples/sec	cross-entropy=8.678062
+INFO:root:Epoch[4] Batch [500-600]	Speed: 66158.74 samples/sec	cross-entropy=8.584091
+INFO:root:Epoch[4] Batch [600-700]	Speed: 64356.44 samples/sec	cross-entropy=8.593235
+INFO:root:Epoch[4] Batch [700-800]	Speed: 63835.37 samples/sec	cross-entropy=8.541490
+INFO:root:Epoch[4] Batch [800-900]	Speed: 64579.30 samples/sec	cross-entropy=8.484473
+INFO:root:Epoch[4] Batch [900-1000]	Speed: 64456.17 samples/sec	cross-entropy=8.502546
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0004.params"
+INFO:root:Iteration 4: HR = 0.4971, NDCG = 0.2478
+INFO:root:Epoch[5] Batch [0-100]	Speed: 67979.90 samples/sec	cross-entropy=9.153411
+INFO:root:Epoch[5] Batch [100-200]	Speed: 65803.11 samples/sec	cross-entropy=9.252553
+INFO:root:Epoch[5] Batch [200-300]	Speed: 65915.99 samples/sec	cross-entropy=9.279205
+INFO:root:Epoch[5] Batch [300-400]	Speed: 66189.66 samples/sec	cross-entropy=9.143478
+INFO:root:Epoch[5] Batch [400-500]	Speed: 66181.56 samples/sec	cross-entropy=9.014182
+INFO:root:Epoch[5] Batch [500-600]	Speed: 66208.29 samples/sec	cross-entropy=8.942102
+INFO:root:Epoch[5] Batch [600-700]	Speed: 66156.64 samples/sec	cross-entropy=8.878765
+INFO:root:Epoch[5] Batch [700-800]	Speed: 65836.40 samples/sec	cross-entropy=8.862209
+INFO:root:Epoch[5] Batch [800-900]	Speed: 67923.09 samples/sec	cross-entropy=8.814606
+INFO:root:Epoch[5] Batch [900-1000]	Speed: 68998.60 samples/sec	cross-entropy=8.769822
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0005.params"
+INFO:root:Iteration 5: HR = 0.4805, NDCG = 0.2344
+INFO:root:Epoch[6] Batch [0-100]	Speed: 67738.50 samples/sec	cross-entropy=9.594163
+INFO:root:Epoch[6] Batch [100-200]	Speed: 65057.13 samples/sec	cross-entropy=9.760651
+INFO:root:Epoch[6] Batch [200-300]	Speed: 65325.83 samples/sec	cross-entropy=9.737850
+INFO:root:Epoch[6] Batch [300-400]	Speed: 65702.38 samples/sec	cross-entropy=9.601197
+INFO:root:Epoch[6] Batch [400-500]	Speed: 65484.42 samples/sec	cross-entropy=9.439278
+INFO:root:Epoch[6] Batch [500-600]	Speed: 65565.01 samples/sec	cross-entropy=9.420750
+INFO:root:Epoch[6] Batch [600-700]	Speed: 66851.21 samples/sec	cross-entropy=9.296611
+INFO:root:Epoch[6] Batch [700-800]	Speed: 67708.48 samples/sec	cross-entropy=9.161759
+INFO:root:Epoch[6] Batch [800-900]	Speed: 65806.80 samples/sec	cross-entropy=9.201317
+INFO:root:Epoch[6] Batch [900-1000]	Speed: 65114.65 samples/sec	cross-entropy=9.213522
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0006.params"
+INFO:root:Iteration 6: HR = 0.4922, NDCG = 0.2472
+INFO:root:Epoch[7] Batch [0-100]	Speed: 67609.83 samples/sec	cross-entropy=10.023564
+INFO:root:Epoch[7] Batch [100-200]	Speed: 65174.89 samples/sec	cross-entropy=10.124063
+INFO:root:Epoch[7] Batch [200-300]	Speed: 65143.08 samples/sec	cross-entropy=10.000602
+INFO:root:Epoch[7] Batch [300-400]	Speed: 65232.74 samples/sec	cross-entropy=9.927010
+INFO:root:Epoch[7] Batch [400-500]	Speed: 65386.71 samples/sec	cross-entropy=9.793895
+INFO:root:Epoch[7] Batch [500-600]	Speed: 65175.35 samples/sec	cross-entropy=9.616178
+INFO:root:Epoch[7] Batch [600-700]	Speed: 65157.53 samples/sec	cross-entropy=9.702284
+INFO:root:Epoch[7] Batch [700-800]	Speed: 65108.22 samples/sec	cross-entropy=9.655193
+INFO:root:Epoch[7] Batch [800-900]	Speed: 64932.85 samples/sec	cross-entropy=9.479529
+INFO:root:Epoch[7] Batch [900-1000]	Speed: 65144.29 samples/sec	cross-entropy=9.429448
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0007.params"
+INFO:root:Iteration 7: HR = 0.4688, NDCG = 0.2366
+INFO:root:Epoch[8] Batch [0-100]	Speed: 68576.24 samples/sec	cross-entropy=10.191227
+INFO:root:Epoch[8] Batch [100-200]	Speed: 68203.03 samples/sec	cross-entropy=10.483145
+INFO:root:Epoch[8] Batch [200-300]	Speed: 68113.86 samples/sec	cross-entropy=10.475935
+INFO:root:Epoch[8] Batch [300-400]	Speed: 67573.99 samples/sec	cross-entropy=10.308886
+INFO:root:Epoch[8] Batch [400-500]	Speed: 67975.07 samples/sec	cross-entropy=10.184398
+INFO:root:Epoch[8] Batch [500-600]	Speed: 67900.00 samples/sec	cross-entropy=10.141063
+INFO:root:Epoch[8] Batch [600-700]	Speed: 66102.35 samples/sec	cross-entropy=10.064546
+INFO:root:Epoch[8] Batch [700-800]	Speed: 65432.63 samples/sec	cross-entropy=9.870246
+INFO:root:Epoch[8] Batch [800-900]	Speed: 65378.32 samples/sec	cross-entropy=9.835779
+INFO:root:Epoch[8] Batch [900-1000]	Speed: 65390.59 samples/sec	cross-entropy=9.823401
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0008.params"
+INFO:root:Iteration 8: HR = 0.4570, NDCG = 0.2328
+INFO:root:Epoch[9] Batch [0-100]	Speed: 64908.42 samples/sec	cross-entropy=10.684067
+INFO:root:Epoch[9] Batch [100-200]	Speed: 65145.61 samples/sec	cross-entropy=10.828679
+INFO:root:Epoch[9] Batch [200-300]	Speed: 65441.67 samples/sec	cross-entropy=10.794051
+INFO:root:Epoch[9] Batch [300-400]	Speed: 65323.21 samples/sec	cross-entropy=10.714473
+INFO:root:Epoch[9] Batch [400-500]	Speed: 65021.97 samples/sec	cross-entropy=10.563453
+INFO:root:Epoch[9] Batch [500-600]	Speed: 65028.60 samples/sec	cross-entropy=10.478438
+INFO:root:Epoch[9] Batch [600-700]	Speed: 65282.89 samples/sec	cross-entropy=10.336023
+INFO:root:Epoch[9] Batch [700-800]	Speed: 65311.48 samples/sec	cross-entropy=10.334824
+INFO:root:Epoch[9] Batch [800-900]	Speed: 66103.67 samples/sec	cross-entropy=10.157349
+INFO:root:Epoch[9] Batch [900-1000]	Speed: 68246.98 samples/sec	cross-entropy=10.101822
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0009.params"
+INFO:root:Iteration 9: HR = 0.4717, NDCG = 0.2338
+INFO:root:End. Best Iteration 3:  HR = 0.4990, NDCG = 0.2425. 
+INFO:root:Training completed.
+Load data done. #user=138493, #item=26744, #train=19861770, #test=138493
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 
+start evaluting...
+evaluating batch 1 / 4, the length of hits is 256 
+evaluating batch 2 / 4, the length of hits is 512 
+evaluating batch 3 / 4, the length of hits is 768 
+evaluating batch 4 / 4, the length of hits is 1024 

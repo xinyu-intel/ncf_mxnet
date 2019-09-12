@@ -64,7 +64,7 @@ parser.add_argument('--beta2', '-b2', type=float, default=0.999,
                     help='beta1 for Adam')
 parser.add_argument('--eps', type=float, default=1e-8,
                     help='eps for Adam')
-parser.add_argument('--gpus', type=str,
+parser.add_argument('--gpus', type=str, 
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
 parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
 
@@ -127,8 +127,7 @@ if __name__ == '__main__':
     log_interval = args.log_interval
 
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
-    # optimizer = 'sgd'
-    # learning_rate = 0.1
+    
     mx.random.seed(args.seed)
     np.random.seed(args.seed)
     topK = 10
@@ -157,16 +156,12 @@ if __name__ == '__main__':
     # use binary cross entropy as the metric
     def cross_entropy(label, pred, eps=1e-12):
         ce = 0
-        # print(pred)
         for l, p in zip(label, pred):
-            # if p==0 or 1:
-            #     print(p)
             ce += -( l*np.log(p+eps) + (1-l)*np.log(1-p+eps))
         return ce
     
-    metric = mx.metric.create(cross_entropy)
-    # ce = mx.metric.CrossEntropy()
-    # metric = mx.metric.create(['ce'])
+    # metric = mx.metric.create(cross_entropy)
+    metric = mx.metric.create(['ce'])
     speedometer = mx.callback.Speedometer(batch_size, log_interval)
     
     best_hr, best_ndcg, best_iter = -1, -1, -1 
@@ -177,30 +172,14 @@ if __name__ == '__main__':
         for batch in train_iter:
             nbatch += 1
             mod.forward(batch, is_train=True)
-            pred=mod.get_outputs()[0]
-            label=batch.label[0]
-            
-            # print(pred, label)
-            # pred=mx.nd.concat(mod.get_outputs()[0], mx.nd.ones_like(mod.get_outputs()[0])-mod.get_outputs()[0], dim=1)
-            
-            # print(pred)
-            # ce.update(labels, predicts)
-           
-            # print(mod.get_outputs()[0])
-            # mod.update_metric(metric, batch.label)
             mod.backward()
-            # mod.forward(batch)
-            # pred = mod.get_outputs()[0]
-            # mod.backward()
             mod.update()
+
+            # pred=mod.get_outputs()[0]
+            pred=mx.nd.concat(mod.get_outputs()[0], mx.nd.ones_like(mod.get_outputs()[0])-mod.get_outputs()[0], dim=1)
+            label=batch.label[0]
             metric.update(label, pred)
-            # label = batch.label[0]
-            # ce = mx.metric.CrossEntropy()
-            # ce.update(label, pred)
-            # metric.update(label, pred)
-            # print(metric.get())
-            # print(batch.label)
-            # mod.update_metric(metric, batch.label)
+        
             speedometer_param = mx.model.BatchEndParam(epoch=epoch, nbatch=nbatch,
                                                        eval_metric=metric, locals=locals())
             speedometer(speedometer_param)

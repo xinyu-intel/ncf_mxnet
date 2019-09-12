@@ -1,0 +1,99 @@
+nohup: ignoring input
+INFO:root:Namespace(batch_size=98304, beta1=0.783529, beta2=0.909003, dataset='ml-20m', eps=1.45439e-07, eval_batch_size=256, factor_size_gmf=64, gpus=None, layers='[256, 128, 64]', learning_rate=0.003821, log_interval=100, model_type='neumf', num_epoch=10, num_hidden=1, num_neg=4, num_valid=1000, path='./data/', seed=1, sparse=False)
+[15:21:50] src/executor/graph_executor.cc:1942: Subgraph backend MKLDNN is activated.
+INFO:root:Training started ...
+INFO:root:Epoch[0] Batch [0-100]	Speed: 42063.49 samples/sec	cross_entropy=24995.750000
+INFO:root:Epoch[0] Batch [100-200]	Speed: 41584.56 samples/sec	cross_entropy=19072.039062
+INFO:root:Epoch[0] Batch [200-300]	Speed: 41636.41 samples/sec	cross_entropy=17344.224609
+INFO:root:Epoch[0] Batch [300-400]	Speed: 41221.33 samples/sec	cross_entropy=16270.193359
+INFO:root:Epoch[0] Batch [400-500]	Speed: 41555.49 samples/sec	cross_entropy=15515.037109
+INFO:root:Epoch[0] Batch [500-600]	Speed: 41591.23 samples/sec	cross_entropy=15025.617188
+INFO:root:Epoch[0] Batch [600-700]	Speed: 41612.14 samples/sec	cross_entropy=14656.244141
+INFO:root:Epoch[0] Batch [700-800]	Speed: 41638.39 samples/sec	cross_entropy=14274.483398
+INFO:root:Epoch[0] Batch [800-900]	Speed: 41606.43 samples/sec	cross_entropy=13883.542969
+INFO:root:Epoch[0] Batch [900-1000]	Speed: 41669.26 samples/sec	cross_entropy=13531.469727
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0000.params"
+INFO:root:Iteration 0: HR = 0.4229, NDCG = 0.2198
+INFO:root:Epoch[1] Batch [0-100]	Speed: 41898.78 samples/sec	cross_entropy=12685.709961
+INFO:root:Epoch[1] Batch [100-200]	Speed: 41589.58 samples/sec	cross_entropy=12617.414062
+INFO:root:Epoch[1] Batch [200-300]	Speed: 41581.34 samples/sec	cross_entropy=12498.884766
+INFO:root:Epoch[1] Batch [300-400]	Speed: 41594.42 samples/sec	cross_entropy=12347.492188
+INFO:root:Epoch[1] Batch [400-500]	Speed: 41603.53 samples/sec	cross_entropy=12238.900391
+INFO:root:Epoch[1] Batch [500-600]	Speed: 41595.34 samples/sec	cross_entropy=12123.374023
+INFO:root:Epoch[1] Batch [600-700]	Speed: 41524.32 samples/sec	cross_entropy=12014.719727
+INFO:root:Epoch[1] Batch [700-800]	Speed: 41470.68 samples/sec	cross_entropy=11907.798828
+INFO:root:Epoch[1] Batch [800-900]	Speed: 41588.38 samples/sec	cross_entropy=11836.669922
+INFO:root:Epoch[1] Batch [900-1000]	Speed: 41570.97 samples/sec	cross_entropy=11698.718750
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0001.params"
+INFO:root:Iteration 1: HR = 0.4756, NDCG = 0.2456
+INFO:root:Epoch[2] Batch [0-100]	Speed: 41861.06 samples/sec	cross_entropy=10397.770508
+INFO:root:Epoch[2] Batch [100-200]	Speed: 41640.95 samples/sec	cross_entropy=10482.224609
+INFO:root:Epoch[2] Batch [200-300]	Speed: 41688.12 samples/sec	cross_entropy=10519.112305
+INFO:root:Epoch[2] Batch [300-400]	Speed: 41549.59 samples/sec	cross_entropy=10556.134766
+INFO:root:Epoch[2] Batch [400-500]	Speed: 41653.99 samples/sec	cross_entropy=10566.267578
+INFO:root:Epoch[2] Batch [500-600]	Speed: 41629.37 samples/sec	cross_entropy=10584.820312
+INFO:root:Epoch[2] Batch [600-700]	Speed: 41530.42 samples/sec	cross_entropy=10598.686523
+INFO:root:Epoch[2] Batch [700-800]	Speed: 41650.20 samples/sec	cross_entropy=10599.981445
+INFO:root:Epoch[2] Batch [800-900]	Speed: 41655.67 samples/sec	cross_entropy=10597.309570
+INFO:root:Epoch[2] Batch [900-1000]	Speed: 41573.06 samples/sec	cross_entropy=10604.206055
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0002.params"
+INFO:root:Iteration 2: HR = 0.4932, NDCG = 0.2479
+INFO:root:Epoch[3] Batch [0-100]	Speed: 41997.62 samples/sec	cross_entropy=8737.750977
+INFO:root:Epoch[3] Batch [100-200]	Speed: 41593.19 samples/sec	cross_entropy=8891.072266
+INFO:root:Epoch[3] Batch [200-300]	Speed: 41672.45 samples/sec	cross_entropy=9060.990234
+INFO:root:Epoch[3] Batch [300-400]	Speed: 41533.96 samples/sec	cross_entropy=9207.131836
+INFO:root:Epoch[3] Batch [400-500]	Speed: 41562.35 samples/sec	cross_entropy=9343.306641
+INFO:root:Epoch[3] Batch [500-600]	Speed: 41533.06 samples/sec	cross_entropy=9430.666016
+INFO:root:Epoch[3] Batch [600-700]	Speed: 41587.77 samples/sec	cross_entropy=9498.527344
+INFO:root:Epoch[3] Batch [700-800]	Speed: 41667.64 samples/sec	cross_entropy=9549.965820
+INFO:root:Epoch[3] Batch [800-900]	Speed: 41677.72 samples/sec	cross_entropy=9652.248047
+INFO:root:Epoch[3] Batch [900-1000]	Speed: 41658.78 samples/sec	cross_entropy=9701.294922
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0003.params"
+INFO:root:Iteration 3: HR = 0.4990, NDCG = 0.2425
+INFO:root:Epoch[4] Batch [0-100]	Speed: 41971.82 samples/sec	cross_entropy=7705.721191
+INFO:root:Epoch[4] Batch [100-200]	Speed: 41655.40 samples/sec	cross_entropy=7921.298828
+INFO:root:Epoch[4] Batch [200-300]	Speed: 41654.05 samples/sec	cross_entropy=8151.223633
+INFO:root:Epoch[4] Batch [300-400]	Speed: 41508.59 samples/sec	cross_entropy=8363.210938
+INFO:root:Epoch[4] Batch [400-500]	Speed: 41553.87 samples/sec	cross_entropy=8511.726562
+INFO:root:Epoch[4] Batch [500-600]	Speed: 41644.90 samples/sec	cross_entropy=8642.083984
+INFO:root:Epoch[4] Batch [600-700]	Speed: 41595.11 samples/sec	cross_entropy=8732.066406
+INFO:root:Epoch[4] Batch [700-800]	Speed: 41563.47 samples/sec	cross_entropy=8861.243164
+INFO:root:Epoch[4] Batch [800-900]	Speed: 41491.69 samples/sec	cross_entropy=8952.950195
+INFO:root:Epoch[4] Batch [900-1000]	Speed: 41549.87 samples/sec	cross_entropy=8986.813477
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0004.params"
+INFO:root:Iteration 4: HR = 0.4971, NDCG = 0.2478
+INFO:root:Epoch[5] Batch [0-100]	Speed: 41972.78 samples/sec	cross_entropy=7075.227539
+INFO:root:Epoch[5] Batch [100-200]	Speed: 41606.05 samples/sec	cross_entropy=7297.097656
+INFO:root:Epoch[5] Batch [200-300]	Speed: 41571.29 samples/sec	cross_entropy=7529.705566
+INFO:root:Epoch[5] Batch [300-400]	Speed: 41653.49 samples/sec	cross_entropy=7748.419434
+INFO:root:Epoch[5] Batch [400-500]	Speed: 41585.36 samples/sec	cross_entropy=7914.657715
+INFO:root:Epoch[5] Batch [500-600]	Speed: 41509.10 samples/sec	cross_entropy=8074.501953
+INFO:root:Epoch[5] Batch [600-700]	Speed: 41612.48 samples/sec	cross_entropy=8185.899414
+INFO:root:Epoch[5] Batch [700-800]	Speed: 41544.94 samples/sec	cross_entropy=8314.459961
+INFO:root:Epoch[5] Batch [800-900]	Speed: 41616.08 samples/sec	cross_entropy=8406.282227
+INFO:root:Epoch[5] Batch [900-1000]	Speed: 41647.12 samples/sec	cross_entropy=8471.798828
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0005.params"
+INFO:root:Iteration 5: HR = 0.4805, NDCG = 0.2344
+INFO:root:Epoch[6] Batch [0-100]	Speed: 41981.78 samples/sec	cross_entropy=6604.883301
+INFO:root:Epoch[6] Batch [100-200]	Speed: 41617.86 samples/sec	cross_entropy=6847.946289
+INFO:root:Epoch[6] Batch [200-300]	Speed: 41603.76 samples/sec	cross_entropy=7097.402344
+INFO:root:Epoch[6] Batch [300-400]	Speed: 41622.45 samples/sec	cross_entropy=7299.194824
+INFO:root:Epoch[6] Batch [400-500]	Speed: 41616.65 samples/sec	cross_entropy=7456.379883
+INFO:root:Epoch[6] Batch [500-600]	Speed: 41635.70 samples/sec	cross_entropy=7609.660645
+INFO:root:Epoch[6] Batch [600-700]	Speed: 41634.03 samples/sec	cross_entropy=7725.906250
+INFO:root:Epoch[6] Batch [700-800]	Speed: 41519.54 samples/sec	cross_entropy=7852.056152
+INFO:root:Epoch[6] Batch [800-900]	Speed: 41571.76 samples/sec	cross_entropy=7935.779297
+INFO:root:Epoch[6] Batch [900-1000]	Speed: 41520.25 samples/sec	cross_entropy=8022.322266
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0006.params"
+INFO:root:Iteration 6: HR = 0.4922, NDCG = 0.2472
+INFO:root:Epoch[7] Batch [0-100]	Speed: 42011.84 samples/sec	cross_entropy=6222.302734
+INFO:root:Epoch[7] Batch [100-200]	Speed: 41565.00 samples/sec	cross_entropy=6473.944336
+INFO:root:Epoch[7] Batch [200-300]	Speed: 41587.53 samples/sec	cross_entropy=6708.504883
+INFO:root:Epoch[7] Batch [300-400]	Speed: 41506.80 samples/sec	cross_entropy=6893.867676
+INFO:root:Epoch[7] Batch [400-500]	Speed: 41493.32 samples/sec	cross_entropy=7082.041992
+INFO:root:Epoch[7] Batch [500-600]	Speed: 41572.33 samples/sec	cross_entropy=7223.015625
+INFO:root:Epoch[7] Batch [600-700]	Speed: 41625.34 samples/sec	cross_entropy=7342.584473
+INFO:root:Epoch[7] Batch [700-800]	Speed: 41569.33 samples/sec	cross_entropy=7474.256348
+INFO:root:Epoch[7] Batch [800-900]	Speed: 41610.02 samples/sec	cross_entropy=7578.845703
+INFO:root:Epoch[7] Batch [900-1000]	Speed: 41497.48 samples/sec	cross_entropy=7652.754883
+INFO:root:Saved checkpoint to "/home/yingguo/ncf_mxnet_data/model/ml-20m/neumf-0007.params"
