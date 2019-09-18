@@ -23,7 +23,8 @@ import numpy as np
 import mxnet as mx
 from Dataset import Dataset
 from model import get_model
-from evaluate import evaluate_model
+#from evaluate import evaluate_model
+from draft import evaluate_model
 from mxnet.contrib.quantization import *
 
 logging.basicConfig(level=logging.DEBUG)
@@ -36,6 +37,8 @@ parser.add_argument('--dataset', nargs='?', default='ml-20m',
                     help='The dataset name.')
 parser.add_argument('--batch-size', type=int, default=256,
                     help='number of examples per batch')
+parser.add_argument('--num-valid', type=int, default=1000,
+                    help='Number of examples for evaluation')                   
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
 parser.add_argument('--layers', default='[256, 128, 64]',
@@ -50,7 +53,7 @@ parser.add_argument('--sparse', action='store_true', help="whether to use sparse
 parser.add_argument('--evaluate', action='store_true', help="whether to evaluate accuracy")
 parser.add_argument('--epoch', type=int, default=0, help='model checkpoint index for inference')
 parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
-parser.add_argument('--prefix', default='checkpoint', help="mdoel prefix for deployment")
+parser.add_argument('--prefix', default='checkpoint', help="model prefix for deployment")
 parser.add_argument('--calibration', action='store_true', help="whether to calibrate model")
 parser.add_argument('--calib-mode', type=str, default='naive',
                     help='calibration mode used for generating calibration table for the quantized symbol; supports'
@@ -83,14 +86,15 @@ def get_movielens_iter(filename, batch_size, logger):
         num_samples = 0
         for line in f:
             tks = line.strip().split('\t')
-            if len(tks) != 3:
+            if len(tks) != 2:
                 continue
             if (int(tks[0]) > 138000 or int(tks[1]) > 26700):
                 continue
             num_samples += 1
             user.append((tks[0]))
             item.append((tks[1]))
-            score.append((tks[2]))
+            #score.append((tks[2]))
+            score.append(1)
     # convert to ndarrays
     user = mx.nd.array(user, dtype='int32')
     item = mx.nd.array(item)
@@ -110,6 +114,7 @@ if __name__ == '__main__':
     logging.info(args)
 
     batch_size = args.batch_size
+    num_valid=args.num_valid
     model_type = args.model_type
     model_layers = eval(args.layers)
     factor_size_gmf = args.factor_size_gmf
@@ -137,6 +142,8 @@ if __name__ == '__main__':
     if args.deploy:
         net, arg_params, aux_params = mx.model.load_checkpoint(args.prefix, args.epoch)
     else:
+        data = Dataset(args.path + args.dataset)
+        max_user, max_movies = data.trainMatrix.shape
         net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
                         model_layers, num_hidden, max_user, max_movies, sparse)
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -187,7 +194,8 @@ if __name__ == '__main__':
         mx.nd.save(param_name, save_dict)
     else:
         if args.evaluate:
-            (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
+            #(hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
+            (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, num_valid, batch_size)
             hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
             logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
         else:
