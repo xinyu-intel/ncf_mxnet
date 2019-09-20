@@ -102,8 +102,8 @@
     }, 
     {
       "op": "null", 
-      "name": "fc_0_weight", 
-      "attrs": {"num_hidden": "256"}, 
+      "name": "mlp_0_weight", 
+      "attrs": {"__init__": "[\"xavier\", {\"rnd_type\": \"uniform\", \"factor_type\": \"avg\", \"magnitude\": 3}]"}, 
       "inputs": []
     }, 
     {
@@ -126,8 +126,8 @@
     }, 
     {
       "op": "null", 
-      "name": "fc_1_weight", 
-      "attrs": {"num_hidden": "128"}, 
+      "name": "mlp_1_weight", 
+      "attrs": {"__init__": "[\"xavier\", {\"rnd_type\": \"uniform\", \"factor_type\": \"avg\", \"magnitude\": 3}]"}, 
       "inputs": []
     }, 
     {
@@ -150,8 +150,8 @@
     }, 
     {
       "op": "null", 
-      "name": "fc_2_weight", 
-      "attrs": {"num_hidden": "64"}, 
+      "name": "mlp_2_weight", 
+      "attrs": {"__init__": "[\"xavier\", {\"rnd_type\": \"uniform\", \"factor_type\": \"avg\", \"magnitude\": 3}]"}, 
       "inputs": []
     }, 
     {
@@ -183,8 +183,8 @@
     }, 
     {
       "op": "null", 
-      "name": "fc_final_weight", 
-      "attrs": {"num_hidden": "1"}, 
+      "name": "final_weight", 
+      "attrs": {"__init__": "[\"xavier\", {\"rnd_type\": \"uniform\", \"factor_type\": \"in\", \"magnitude\": 3}]"}, 
       "inputs": []
     }, 
     {

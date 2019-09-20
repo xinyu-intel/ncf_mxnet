@@ -21,26 +21,25 @@ pip install -r requirements.txt
 
 ## Dataset
 
-We provide two processed datasets on [Google Drive](https://drive.google.com/drive/folders/1qACR_Zhc2O2W0RrazzcepM2vJeh0MMdO?usp=sharing): MovieLens 20 Million (ml-20m).
+We provide the processed datasets on [Google Drive](https://drive.google.com/drive/folders/1qACR_Zhc2O2W0RrazzcepM2vJeh0MMdO?usp=sharing): MovieLens 20 Million (ml-20m), you can download directly or 
+run the script to prepare the datasets:
+```
+python convert.py 
+```
 
 train.rating: 
-- Train file.
-- Each Line is a training instance: userID\t itemID\t rating\t timestamp (if have)
+- Train file (positive instances).
+- Each Line is a training instance: userID\t itemID\t 
 
 test.rating:
 - Test file (positive instances). 
-- Each Line is a testing instance: userID\t itemID\t rating\t timestamp (if have)
+- Each Line is a testing instance: userID\t itemID\t 
 
 test.negative
 - Test file (negative instances).
-- Each line corresponds to the line of test.rating, containing 99 negative samples.  
-- Each line is in the format: (userID,itemID)\t negativeItemID1\t negativeItemID2 ...
+- Each line corresponds to the line of test.rating, containing 999 negative samples.  
+- Each line is in the format: userID,\t negativeItemID1\t negativeItemID2 ...
 
-It will take long time to prepare `test.negative` dataset, you can run the following command to make one if you want.
-
-```
-python convert.py --dataset='ml-20m' --negative-num=99
-```
 
 ## Training
 
@@ -50,32 +49,32 @@ Currently doesn't support train neumf model with pre-trained gmf and mlp model.
 
 ```
 # train neumf on ml-20m dataset
-python train_ncf.py --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64
+python train_ncf.py --batch-size 65536 --learning-rate 0.0002 
 # train gmf on ml-20m dataset
-python train_ncf.py --dataset='ml-20m' --factor-size-gmf=64 --model-type='gmf'
+python train_ncf.py --batch-size 65536 --learning-rate 0.0002  --model-type='gmf'
 # train mlp on ml-20m dataset
-python train_ncf.py --dataset='ml-20m' --layers='[256, 128, 64]' --model-type='mlp'
+python train_ncf.py --batch-size 65536 --learning-rate 0.0002  --model-type='mlp'
 ```
 
 ## Inference
 
 ```
 # neumf inference on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --deploy --prefix=./model/ml-20m/neumf
+python eval_ncf.py  --epoch=2 --deploy --prefix=./model/ml-20m/neumf
 ```
 
 # Calibration
 
 ```
 # neumf calibration on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --deploy --prefix=./model/ml-20m/neumf --calibration
+python eval_ncf.py --epoch=2 --deploy --prefix=./model/ml-20m/neumf --calibration
 # neumf int8 inference on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --deploy --prefix=./model/ml-20m/neumf-quantized
+python eval_ncf.py --epoch=2 --deploy --prefix=./model/ml-20m/neumf-quantized
 ```
 
 ## Evaluate Accuracy
 
 ```
 # evaluate neumf accuracy on ml-20m dataset
-python eval_ncf.py --batch-size=256 --dataset='ml-20m' --layers='[256, 128, 64]' --factor-size-gmf=64 --epoch=2 --evaluate 
+python eval_ncf.py --epoch=2 --evaluate 
 ```

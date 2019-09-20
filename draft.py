@@ -104,14 +104,17 @@ def getNDCG(ranklist, gtItem):
     # return 0
 
 if __name__ == "__main__":
-    data = Dataset('mini_data/ml-20m')
+    data = Dataset('data/ml-20m')
     train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
     train_iter = get_train_iters(train, 4, 98304)
-    net, arg_params, aux_params = mx.model.load_checkpoint('model/ml-20m/neumf', 0)
+    # net, arg_params, aux_params = mx.model.load_checkpoint('model/ml-20m/neumf', 0)
+    net, arg_params, aux_params = mx.model.load_checkpoint('ncf-mxnet', 0)
     mod = mx.module.Module(net, data_names=['user', 'item'], label_names=['softmax_label'])
     mod.bind(data_shapes=train_iter.provide_data, label_shapes=train_iter.provide_label)
     mod.set_params(arg_params, aux_params)
-    evaluate_model(mod, testRatings, testNegatives, 10, 100, 10)
+    (hits, ndcgs)=evaluate_model(mod, testRatings, testNegatives, 10, 100, 10)
+    hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
+    print(hr, ndcg)
 
 
 
