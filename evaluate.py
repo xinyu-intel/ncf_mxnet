@@ -17,88 +17,128 @@
 # 
 import math
 import heapq
-import multiprocessing
+import random
 import numpy as np
-from time import time
 import logging
 import mxnet as mx
 
-# Global variables that are shared across processes
-_model = None
-_testRatings = None
-_testNegatives = None
-_K = None
-
-def get_eval_iters(user, item, batch_size):
-    data_eval = {'user': user, 'item': item}
-    label = np.zeros(len(item))
-    iter_eval = mx.io.NDArrayIter(data=data_eval,label=label,
-                                   batch_size=batch_size, shuffle=False)
-    return iter_eval
-
-def evaluate_model(model, testRatings, testNegatives, K, num_thread):
+def get_movielens_iter(filename, batch_size, logger):
+    """Not particularly fast code to parse the text file and load into NDArrays.
+    return two data iters, one for train, the other for validation.
     """
-    Evaluate the performance (Hit_Ratio, NDCG) of top-K recommendation
-    Return: score of each test rating.
-    """
-    global _model
-    global _testRatings
-    global _testNegatives
-    global _K
-    _model = model
-    _testRatings = testRatings
-    _testNegatives = testNegatives
-    _K = K
+    logger.info("Preparing data iterators for " + filename + " ... ")
+    user = []
+    item = []
+    score = []
+    with open(filename, 'r') as f:
+        num_samples = 0
+        for line in f:
+            tks = line.strip().split('\t')
+            if len(tks) != 3:
+                continue
+            if (int(tks[0]) > 138000 or int(tks[1]) > 26700):
+                continue
+            num_samples += 1
+            user.append((tks[0]))
+            item.append((tks[1]))
+            score.append((tks[2]))
+    # convert to ndarrays
+    user = mx.nd.array(user, dtype='int32')
+    item = mx.nd.array(item)
+    score = mx.nd.array(score)
+    # prepare data iters
+    data = {'user': user, 'item': item}
+    label = {'softmax_label': score}
+    iter = mx.io.NDArrayIter(data=data, label=label, batch_size=batch_size)
+    return iter
+
+
+def get_train_instances(train, num_negatives):
+    user_input, item_input, labels = [],[],[]
+    num_users, num_items = train.shape
+    for (u, i) in train.keys():
+        # positive instance
+        user_input.append(u)
+        item_input.append(i)
+        labels.append(1)
+        # negative instances
+        for t in range(num_negatives):
+            j = np.random.randint(num_items)
+            while (u,j) in train.keys():        
+                j = np.random.randint(num_items)
+            user_input.append(u)
+            item_input.append(j)
+            labels.append(0)
+    return user_input, item_input, labels
+
+def get_train_iters(train, num_negatives, batch_size):
+    user, item, label = get_train_instances(train, num_negatives)
+
+    user = mx.nd.array(user, dtype='int32')
+    item = mx.nd.array(item, dtype='int32')
+    label = mx.nd.array(label) 
+    
+    data_train = {'user': user, 'item': item}
+    label_train = {'softmax_label': label}
+    iter_train = mx.io.NDArrayIter(data=data_train,label=label_train,
+                                   batch_size=batch_size, shuffle=True)
+    return mx.io.PrefetchingIter(iter_train)
+
+def get_eval_iters(testRatings, testNegatives, num_valid, batch_size):
+    testUsers=[] 
+    testItems=[]
+    trueRating=[] #true rating, or posivite item 
+    num_items=len(testNegatives[0])+1 #1000
+    index=random.sample(range(len(testNegatives)),num_valid) #sample num_valid examples from #test
+    for i in range(len(index)):
+        _user=[testRatings[i][0]]*num_items
+        testNegatives[i].append(testRatings[i][1])
+        _item= testNegatives[i]
+        _label=testRatings[i][1]
+        testUsers.append(_user)
+        testItems.append(_item)
+        trueRating.append(_label)
+    user = mx.nd.array(testUsers, dtype='int32')
+    item = mx.nd.array(testItems, dtype='int32')
+    data = {'user': user, 'item': item}
+    label = mx.nd.array(trueRating, dtype='int32')
+    print(batch_size)
+    eval_iter = mx.io.NDArrayIter(data=data, label=label, batch_size=batch_size)
+    return mx.io.PrefetchingIter(eval_iter), num_items
+
+def evaluate_model(model, eval_iter, num_items, num_valid, K, batch_size):
+    print("start evaluting...")
+    hits, ndcgs, predictions = [], [], []
+    for batch in eval_iter:
+        user=batch.data[1].reshape(-1)
+        item=batch.data[0].reshape(-1)
+        label=mx.nd.zeros(user.shape)
+        batch_iter=mx.io.NDArrayIter(data={'user': user, 'item': item}, label=label, batch_size=len(user))
+
+        output = model.predict(batch_iter)
+        mx.nd.waitall()
+        predictions.append(output)
+    eval_iter.reset()
+    for b, batch in enumerate(eval_iter):
+        user=batch.data[1].reshape(-1)
+        item=batch.data[0].reshape(-1)
+        for i in range(batch_size):
+            map_item_score=dict(zip(item[i*num_items:(i+1)*num_items],predictions[b][i*num_items:(i+1)*num_items].as_in_context(item.context)))
+            ranklist = heapq.nlargest(K, map_item_score, key=map_item_score.get)
+            hr = getHitRatio(ranklist, batch.label[0][i])
+            ndcg = getNDCG(ranklist, batch.label[0][i])
+            hits.append(hr)
+            ndcgs.append(ndcg)
+        print('evaluating batch {} / {}, the length of hits is {} '.format(b, math.ceil(num_valid/batch_size), len(hits)))
         
-    hits, ndcgs = [],[]
-    if(num_thread > 1): # Multi-thread
-        pool = multiprocessing.Pool(processes=num_thread)
-        res = pool.map(eval_one_rating, range(len(_testRatings)))
-        pool.close()
-        pool.join()
-        hits = [r[0] for r in res]
-        ndcgs = [r[1] for r in res]
-        return (hits, ndcgs)
-    # Single thread
-    for idx in range(len(_testRatings)):
-        (hr,ndcg) = eval_one_rating(idx)
-        hits.append(hr)
-        ndcgs.append(ndcg)
-    #     print('\revaluate idx:{}, hr:{}'.format(idx, hr), end='')
-    # print('\n')
     return (hits, ndcgs)
 
-def eval_one_rating(idx):
-    rating = _testRatings[idx]
-    items = _testNegatives[idx]
-    u = rating[0]
-    gtItem = rating[1]
-    items.append(gtItem)
-    # Get prediction scores
-    map_item_score = {}
-    users = np.full(len(items), u, dtype = 'int32')
-    iter_eval = get_eval_iters(users, items, batch_size=1000)
-    predictions = _model.predict(iter_eval)
-    for i in range(len(items)):
-        item = items[i]
-        map_item_score[item] = predictions[i]
-    items.pop()
-    
-    # Evaluate top rank list
-    ranklist = heapq.nlargest(_K, map_item_score, key=map_item_score.get)
-    hr = getHitRatio(ranklist, gtItem)
-    ndcg = getNDCG(ranklist, gtItem)
-    return (hr, ndcg)
-
 def getHitRatio(ranklist, gtItem):
-    for item in ranklist:
-        if item == gtItem:
-            return 1
+    if gtItem in ranklist:
+        return 1
     return 0
 
 def getNDCG(ranklist, gtItem):
-    for i in range(len(ranklist)):
-        item = ranklist[i]
-        if item == gtItem:
-            return math.log(2) / math.log(i+2)
+    if gtItem in ranklist:
+        return math.log(2) / math.log(ranklist.index(gtItem)+2)
     return 0

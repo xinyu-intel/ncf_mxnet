@@ -24,26 +24,21 @@ class Dataset(object):
     classdocs
     '''
 
-    def __init__(self, path):
+    def __init__(self, path, is_train = False):
         '''
         Constructor
         '''
-        self.data_raw = pd.read_csv('./data/ml-20m/ratings.csv', sep=',', usecols=(0, 1, 2))
-        self.unique_item = np.unique(self.data_raw['movieId'])-1
-        self.trainMatrix = self.load_rating_file_as_matrix(path + ".train.rating")
-        self.testRatings = self.load_rating_file_as_list(path + ".test.rating")
-        self.testNegatives = self.load_negative_file(path + ".test.negative")
+        self.num_users = 138493
+        self.num_items = 26744
+        self.testRatings = self.load_rating_file_as_list(path + "/test-ratings.csv")
+        self.testNegatives = self.load_negative_file(path + "/test-negative.csv")
         assert len(self.testRatings) == len(self.testNegatives)
+        if is_train:
+            self.data_raw = pd.read_csv(path + "/ratings.csv", sep=',', usecols=(0, 1, 2))
+            self.trainMatrix = self.load_rating_file_as_matrix(path + "/train-ratings.csv")
+            self.num_users = np.unique(self.data_raw['userId']).shape[0] #138493
+            self.num_items = np.unique(self.data_raw['movieId']).shape[0] #26744
 
-    def load_rating_file_as_iter(self, filename):
-        user, item = [], []
-        with open(filename, "r") as f:
-            line = f.readline()
-            while line != None and line != "":
-                arr = line.split("\t")
-                user.append(int(arr[0]))
-                item.append(int(arr[1]))
-        return user, item
 
     def load_rating_file_as_list(self, filename):
         ratingList = []
@@ -52,7 +47,6 @@ class Dataset(object):
             while line != None and line != "":
                 arr = line.split("\t")
                 user, item = int(arr[0]), int(arr[1])
-                # item = np.argwhere(self.unique_item==item)[0][0]
                 ratingList.append([user, item])
                 line = f.readline()
         return ratingList
@@ -64,7 +58,7 @@ class Dataset(object):
             while line != None and line != "":
                 arr = line.split("\t")
                 negatives = []
-                for x in arr[1: ]:
+                for x in arr:
                     negatives.append(int(x))
                 negativeList.append(negatives)
                 line = f.readline()
@@ -75,17 +69,13 @@ class Dataset(object):
         Read .rating file and Return dok matrix.
         The first line of .rating file is: num_users\t num_items
         '''
-        # Get number of users and items
-        num_users = np.unique(self.data_raw['userId']).shape[0] #138493
-        num_items = np.unique(self.data_raw['movieId']).shape[0] #26744
         # Construct matrix
-        mat = sp.dok_matrix((num_users, num_items), dtype=np.float32)
+        mat = sp.dok_matrix((self.num_users, self.num_items), dtype=np.float32)
         with open(filename, "r") as f:
             line = f.readline()
             while line != None and line != "":
                 arr = line.split("\t")
                 user, item = int(arr[0]), int(arr[1])
-                # item = np.argwhere(self.unique_item==item)[0][0]
                 mat[user, item] = 1.0
                 line = f.readline()    
         return mat

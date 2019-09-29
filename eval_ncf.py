@@ -19,12 +19,14 @@ import os
 import time
 import argparse
 import logging
+import heapq
+import math
+import random
 import numpy as np
 import mxnet as mx
 from Dataset import Dataset
 from model import get_model
-#from evaluate import evaluate_model
-from draft import evaluate_model
+from evaluate import *
 from mxnet.contrib.quantization import *
 
 logging.basicConfig(level=logging.DEBUG)
@@ -50,10 +52,10 @@ parser.add_argument('--num-hidden', type=int, default=1,
 parser.add_argument('--gpus', type=str,
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
 parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
-parser.add_argument('--evaluate', action='store_true', help="whether to evaluate accuracy")
+parser.add_argument('--benchmark', action='store_true',  help="whether to benchmark performance only")
 parser.add_argument('--epoch', type=int, default=0, help='model checkpoint index for inference')
 parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
-parser.add_argument('--prefix', default='checkpoint', help="model prefix for deployment")
+parser.add_argument('--prefix', default='./model/ml-20m/neumf', help="model prefix for deployment")
 parser.add_argument('--calibration', action='store_true', help="whether to calibrate model")
 parser.add_argument('--calib-mode', type=str, default='naive',
                     help='calibration mode used for generating calibration table for the quantized symbol; supports'
@@ -74,37 +76,6 @@ parser.add_argument('--quantized-dtype', type=str, default='auto',
 parser.add_argument('--num-calib-batches', type=int, default=10,
                     help='number of batches for calibration')
 
-def get_movielens_iter(filename, batch_size, logger):
-    """Not particularly fast code to parse the text file and load into NDArrays.
-    return two data iters, one for train, the other for validation.
-    """
-    logger.info("Preparing data iterators for " + filename + " ... ")
-    user = []
-    item = []
-    score = []
-    with open(filename, 'r') as f:
-        num_samples = 0
-        for line in f:
-            tks = line.strip().split('\t')
-            if len(tks) != 2:
-                continue
-            if (int(tks[0]) > 138000 or int(tks[1]) > 26700):
-                continue
-            num_samples += 1
-            user.append((tks[0]))
-            item.append((tks[1]))
-            #score.append((tks[2]))
-            score.append(1)
-    # convert to ndarrays
-    user = mx.nd.array(user, dtype='int32')
-    item = mx.nd.array(item)
-    score = mx.nd.array(score)
-    # prepare data iters
-    data = {'user': user, 'item': item}
-    label = {'softmax_label': score}
-    iter = mx.io.NDArrayIter(data=data, label=label, batch_size=batch_size)
-    return iter
-
 if __name__ == '__main__':
     head = '%(asctime)-15s %(message)s'
     logging.basicConfig(level=logging.INFO, format=head)
@@ -121,6 +92,7 @@ if __name__ == '__main__':
     factor_size_mlp = int(model_layers[0]/2)
     num_hidden = args.num_hidden
     sparse = args.sparse
+    benchmark = args.benchmark
     calib_mode = args.calib_mode
     quantized_dtype = args.quantized_dtype
     num_calib_batches = args.num_calib_batches
@@ -128,22 +100,20 @@ if __name__ == '__main__':
     topK = 10
     evaluation_threads = 1#mp.cpu_count()
 
-    # prepare dataset and iterators
-    logging.info('Prepare Dataset')
-    if not args.deploy and args.evaluate:
+    # prepare dataset
+    if not benchmark:
+        logging.info('Prepare Dataset')
         data = Dataset(args.path + args.dataset)
-        train, testRatings, testNegatives = data.trainMatrix, data.testRatings, data.testNegatives
-        max_user, max_movies = train.shape
+        testRatings, testNegatives, max_user, max_movies = data.testRatings, data.testNegatives, data.num_users, data.num_items
         logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
                     %(max_user, max_movies, len(testRatings)))
-    val_iter = get_movielens_iter(args.path + args.dataset + '.test.rating', batch_size, logger=logging)
-    logging.info('Prepare Dataset completed')
+        logging.info('Prepare Dataset completed')
+    else:
+        max_user, max_movies = 138493, 26744
     # construct the model
     if args.deploy:
         net, arg_params, aux_params = mx.model.load_checkpoint(args.prefix, args.epoch)
     else:
-        data = Dataset(args.path + args.dataset)
-        max_user, max_movies = data.trainMatrix.shape
         net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
                         model_layers, num_hidden, max_user, max_movies, sparse)
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -157,18 +127,19 @@ if __name__ == '__main__':
                 arg_params[name] = v
             if tp == 'aux':
                 aux_params[name] = v
-    if ctx == mx.cpu():
-        if args.calibration:
-            net = net.get_backend_symbol('MKLDNN_QUANTIZE')
-        else:
-            net = net.get_backend_symbol('MKLDNN')
+    if ctx == mx.cpu() and args.calibration:
+        net = net.get_backend_symbol('MKLDNN_QUANTIZE')
 
     # initialize the module
     mod = mx.module.Module(net, context=ctx, data_names=['user', 'item'], label_names=['softmax_label'])
-    mod.bind(for_training=False, data_shapes=val_iter.provide_data, label_shapes=val_iter.provide_label)
+    provide_data = [mx.io.DataDesc(name='item', shape=((batch_size,))),
+                    mx.io.DataDesc(name='user', shape=((batch_size,)))]
+    provide_label = [mx.io.DataDesc(name='softmax_label', shape=((batch_size,)))]
+    mod.bind(for_training=False, data_shapes=provide_data, label_shapes=provide_label)
     mod.set_params(arg_params, aux_params)
 
     if args.calibration:
+        val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, batch_size)
         excluded_sym_names = ['post_gemm_concat', 'pre_gemm_concat']
         logging.info('Quantizing FP32 model')
         if calib_mode == 'none':
@@ -193,16 +164,14 @@ if __name__ == '__main__':
         save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
         mx.nd.save(param_name, save_dict)
     else:
-        if args.evaluate:
-            #(hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, evaluation_threads)
-            (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, num_valid, batch_size)
-            hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
-            logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
-        else:
-            logging.info('Inference...')
-            tic = time.time()
+        if benchmark:
+            val_iter = get_movielens_iter(args.path + args.dataset + '/test-ratings.csv', batch_size, logger=logging)
+            logging.info('Benchmarking...')
             num_samples = 0
-            for batch in val_iter:
+            for ib, batch in enumerate(val_iter):
+                if ib == 5:
+                    num_samples = 0
+                    tic = time.time()
                 mod.forward(batch, is_train=False)
                 mx.nd.waitall()
                 num_samples += batch_size
@@ -210,3 +179,9 @@ if __name__ == '__main__':
             fps = num_samples/(toc - tic)
             logging.info('Evaluating completed')
             logging.info('Inference speed %.4f fps' % fps)
+
+        else:
+            val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, batch_size)
+            (hits, ndcgs) = evaluate_model(mod, val_iter, num_items, num_valid, topK, batch_size)
+            hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
+            logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
