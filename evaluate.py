@@ -21,6 +21,7 @@ import random
 import numpy as np
 import logging
 import mxnet as mx
+import multiprocessing
 
 def get_movielens_iter(filename, batch_size, logger):
     """Not particularly fast code to parse the text file and load into NDArrays.
@@ -102,12 +103,18 @@ def get_eval_iters(testRatings, testNegatives, num_valid, batch_size):
     item = mx.nd.array(testItems, dtype='int32')
     data = {'user': user, 'item': item}
     label = mx.nd.array(trueRating, dtype='int32')
-    print(batch_size)
     eval_iter = mx.io.NDArrayIter(data=data, label=label, batch_size=batch_size)
     return mx.io.PrefetchingIter(eval_iter), num_items
 
-def evaluate_model(model, eval_iter, num_items, num_valid, K, batch_size):
-    print("start evaluting...")
+def calculate(i, item, num_items, predictions, K, batch_label):
+    map_item_score=dict(zip(item[i*num_items:(i+1)*num_items],predictions[i*num_items:(i+1)*num_items].as_in_context(item.context)))
+    ranklist = heapq.nlargest(K, map_item_score, key=map_item_score.get)
+    hr = getHitRatio(ranklist, batch_label[i])
+    ndcg = getNDCG(ranklist, batch_label[i])
+    return (hr, ndcg)
+
+def evaluate_model(model, eval_iter, num_items, num_valid, K, batch_size, evaluation_threads):
+    print("start evaluating...")
     hits, ndcgs, predictions = [], [], []
     for batch in eval_iter:
         user=batch.data[1].reshape(-1)
@@ -118,19 +125,21 @@ def evaluate_model(model, eval_iter, num_items, num_valid, K, batch_size):
         output = model.predict(batch_iter)
         mx.nd.waitall()
         predictions.append(output)
+    print("evaluate done, calculating accuracy, this may take some time...")
     eval_iter.reset()
     for b, batch in enumerate(eval_iter):
-        user=batch.data[1].reshape(-1)
+        pool = multiprocessing.Pool(processes=evaluation_threads)
         item=batch.data[0].reshape(-1)
+        results = []
         for i in range(batch_size):
-            map_item_score=dict(zip(item[i*num_items:(i+1)*num_items],predictions[b][i*num_items:(i+1)*num_items].as_in_context(item.context)))
-            ranklist = heapq.nlargest(K, map_item_score, key=map_item_score.get)
-            hr = getHitRatio(ranklist, batch.label[0][i])
-            ndcg = getNDCG(ranklist, batch.label[0][i])
-            hits.append(hr)
-            ndcgs.append(ndcg)
-        print('evaluating batch {} / {}, the length of hits is {} '.format(b, math.ceil(num_valid/batch_size), len(hits)))
-        
+            results.append(pool.apply_async(calculate, (i, item, num_items, predictions[b], K, batch.label[0], )))
+        pool.close()
+        pool.join()
+        for res in results:
+            hits.append(res.get()[0])
+            ndcgs.append(res.get()[1])
+            print('evaluating batch {} / {}, the length of hits is {} '.format(b, math.ceil(num_valid/batch_size), len(hits)))
+            
     return (hits, ndcgs)
 
 def getHitRatio(ranklist, gtItem):
