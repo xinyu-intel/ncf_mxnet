@@ -24,6 +24,7 @@ import math
 import random
 import numpy as np
 import mxnet as mx
+import multiprocessing as mp
 from Dataset import Dataset
 from model import get_model
 from evaluate import *
@@ -57,16 +58,13 @@ parser.add_argument('--epoch', type=int, default=0, help='model checkpoint index
 parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
 parser.add_argument('--prefix', default='./model/ml-20m/neumf', help="model prefix for deployment")
 parser.add_argument('--calibration', action='store_true', help="whether to calibrate model")
-parser.add_argument('--calib-mode', type=str, default='naive',
+parser.add_argument('--calib-mode', type=str, choices=['naive', 'entropy'], default='naive',
                     help='calibration mode used for generating calibration table for the quantized symbol; supports'
-                            ' 1. none: no calibration will be used. The thresholds for quantization will be calculated'
-                            ' on the fly. This will result in inference speed slowdown and loss of accuracy'
-                            ' in general.'
-                            ' 2. naive: simply take min and max values of layer outputs as thresholds for'
+                            ' 1. naive: simply take min and max values of layer outputs as thresholds for'
                             ' quantization. In general, the inference accuracy worsens with more examples used in'
                             ' calibration. It is recommended to use `entropy` mode as it produces more accurate'
                             ' inference results.'
-                            ' 3. entropy: calculate KL divergence of the fp32 output and quantized output for optimal'
+                            ' 2. entropy: calculate KL divergence of the fp32 output and quantized output for optimal'
                             ' thresholds. This mode is expected to produce the best inference accuracy of all three'
                             ' kinds of quantized models if the calibration dataset is representative enough of the'
                             ' inference dataset.')
@@ -98,17 +96,19 @@ if __name__ == '__main__':
     num_calib_batches = args.num_calib_batches
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
     topK = 10
-    evaluation_threads = 1#mp.cpu_count()
+    evaluation_threads = mp.cpu_count()
 
     # prepare dataset
-    if not benchmark:
+    if not benchmark and not args.calibration:
         logging.info('Prepare Dataset')
         data = Dataset(args.path + args.dataset)
         testRatings, testNegatives, max_user, max_movies = data.testRatings, data.testNegatives, data.num_users, data.num_items
         logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
                     %(max_user, max_movies, len(testRatings)))
+        val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, batch_size)
         logging.info('Prepare Dataset completed')
     else:
+        val_iter = get_movielens_iter(args.path + args.dataset + '/test-ratings.csv', batch_size, logger=logging)
         max_user, max_movies = 138493, 26744
     # construct the model
     if args.deploy:
@@ -139,33 +139,33 @@ if __name__ == '__main__':
     mod.set_params(arg_params, aux_params)
 
     if args.calibration:
-        val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, batch_size)
-        excluded_sym_names = ['post_gemm_concat', 'pre_gemm_concat']
+        excluded_sym_names = ['post_gemm_concat', 'pre_gemm_concat', 'fc_final']
         logging.info('Quantizing FP32 model')
-        if calib_mode == 'none':
-            qsym, qarg_params, aux_params = quantize_model(sym=net, arg_params=arg_params, aux_params=aux_params,
-                                                        ctx=ctx, excluded_sym_names=excluded_sym_names,
-                                                        calib_mode=calib_mode, quantized_dtype=quantized_dtype,
-                                                        logger=logging)
-            sym_name = '%s-symbol.json' % (args.prefix + '-quantized')
-        else:
-            qsym, qarg_params, aux_params = quantize_model(sym=net, arg_params=arg_params, aux_params=aux_params,
-                                                            ctx=ctx, excluded_sym_names=excluded_sym_names,
-                                                            calib_mode=calib_mode, calib_data=val_iter,
-                                                            num_calib_examples=num_calib_batches * batch_size,
-                                                            calib_layer=None, quantized_dtype=args.quantized_dtype,
-                                                            data_names=['user', 'item'], label_names=('softmax_label',),
-                                                            logger=logging)
-            sym_name = '%s-symbol.json' % (args.prefix + '-quantized')
-        qsym = qsym.get_backend_symbol('MKLDNN_QUANTIZE')
-        qsym.save(sym_name)
-        param_name = '%s-%04d.params' % (args.prefix + '-quantized', args.epoch)
-        save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu()) for k, v in qarg_params.items()}
-        save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
-        mx.nd.save(param_name, save_dict)
+        cqsym, cqarg_params, aux_params, collector = quantize_graph(sym=net, arg_params=arg_params, aux_params=aux_params,
+                                                                    excluded_sym_names=excluded_sym_names,
+                                                                    calib_mode=calib_mode,
+                                                                    quantized_dtype=args.quantized_dtype, logger=logging)
+        max_num_examples = num_calib_batches * batch_size
+        mod._exec_group.execs[0].set_monitor_callback(collector.collect, monitor_all=True)
+        num_batches = 0
+        num_examples = 0
+        for batch in val_iter:
+            mod.forward(batch)
+            num_batches += 1
+            num_examples += batch_size
+            if num_examples >= max_num_examples:
+                break
+        logging.info("Collected statistics from %d batches with batch_size=%d"
+                    % (num_batches, batch_size))
+        print(collector.min_max_dict)
+        cqsym, cqarg_params, aux_params = calib_graph(qsym=cqsym, arg_params=arg_params, aux_params=aux_params,
+                                                      collector=collector, calib_mode=calib_mode,
+                                                      quantized_dtype=args.quantized_dtype, logger=logging)                                                       
+        sym_name = '%s-symbol.json' % (args.prefix + '-quantized')
+        cqsym = cqsym.get_backend_symbol('MKLDNN_QUANTIZE')
+        mx.model.save_checkpoint(args.prefix + '-quantized', args.epoch, cqsym, cqarg_params, aux_params)
     else:
         if benchmark:
-            val_iter = get_movielens_iter(args.path + args.dataset + '/test-ratings.csv', batch_size, logger=logging)
             logging.info('Benchmarking...')
             num_samples = 0
             for ib, batch in enumerate(val_iter):
@@ -181,7 +181,6 @@ if __name__ == '__main__':
             logging.info('Inference speed %.4f fps' % fps)
 
         else:
-            val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, batch_size)
-            (hits, ndcgs) = evaluate_model(mod, val_iter, num_items, num_valid, topK, batch_size)
+            (hits, ndcgs) = evaluate_model(mod, val_iter, num_items, num_valid, topK, batch_size, evaluation_threads)
             hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
             logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
