@@ -12,7 +12,7 @@ Code Reference: https://github.com/hexiangnan/neural_collaborative_filtering
 
 ## Environment Settings
 We use MXnet with MKL-DNN as the backend. 
-- MXNet version:  '1.5.0rc2'
+- MXNet version:  '1.5.1'
 
 ## Install
 ```
@@ -27,54 +27,59 @@ run the script to prepare the datasets:
 python convert.py 
 ```
 
-train.rating: 
+train-ratings.csv
 - Train file (positive instances).
 - Each Line is a training instance: userID\t itemID\t 
 
-test.rating:
+test-ratings.csv
 - Test file (positive instances). 
 - Each Line is a testing instance: userID\t itemID\t 
 
-test.negative
+test-negative.csv
 - Test file (negative instances).
 - Each line corresponds to the line of test.rating, containing 999 negative samples.  
 - Each line is in the format: userID,\t negativeItemID1\t negativeItemID2 ...
 
+## Pre-trained models
+
+We convert pre-trained NCF model from [MLPerf Pytorch version](https://github.com/mlperf/training/blob/948db9b11cdfa7d953769e53c560396f41617f1b/recommendation/pytorch/).
+
+Pre-trained Pytorch model can be get from [Google Drive](https://drive.google.com/drive/folders/1qACR_Zhc2O2W0RrazzcepM2vJeh0MMdO?usp=sharing) and you can convert it to MXNet by the following command.
+
+```
+python export/export.py
+```
+
+|dtype|HR|NDCG|
+|:---:|:--:|:--:|
+|float32|0.6327|0.3809|
+|int8|0.6330|0.3812|
 
 ## Training
 
-Currently doesn't support train neumf model with pre-trained gmf and mlp model.
-
-### ml-20m
-
-```
-# train neumf on ml-20m dataset
-python train_ncf.py --batch-size 65536 --learning-rate 0.0002 
-# train gmf on ml-20m dataset
-python train_ncf.py --batch-size 65536 --learning-rate 0.0002  --model-type='gmf'
-# train mlp on ml-20m dataset
-python train_ncf.py --batch-size 65536 --learning-rate 0.0002  --model-type='mlp'
-```
-
-## Inference
-
-```
-# neumf inference on ml-20m dataset
-python eval_ncf.py  --epoch=2 --deploy --prefix=./model/ml-20m/neumf
-```
+TBD
 
 # Calibration
 
 ```
 # neumf calibration on ml-20m dataset
-python eval_ncf.py --epoch=2 --deploy --prefix=./model/ml-20m/neumf --calibration
+python ncf.py --deploy --prefix=./model/ml-20m/neumf --calibration
+```
+
+## Inference
+
+```
+# neumf float32 inference on ml-20m dataset
+python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf
 # neumf int8 inference on ml-20m dataset
-python eval_ncf.py --epoch=2 --deploy --prefix=./model/ml-20m/neumf-quantized
+python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf-quantized
 ```
 
-## Evaluate Accuracy
+## Benchmark
 
 ```
-# evaluate neumf accuracy on ml-20m dataset
-python eval_ncf.py --epoch=2 --evaluate 
+# neumf float32 benchmark on ml-20m dataset
+python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf --benchmark
+# neumf int8 benchmark on ml-20m dataset
+python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf-quantized --benchmark
 ```
