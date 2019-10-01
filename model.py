@@ -41,7 +41,7 @@ def mlp(user, item, factor_size, model_layers, max_user, max_item, sparse):
         #     mlp_weight=golorot_uniform(2*factor_size,layer[i])
         # else:
         #     mlp_weight=golorot_uniform(layer[i-1],layer[i])
-        mlp_weight = mx.sym.Variable('mlp_{}_weight'.format(i), init=mx.init.Xavier())
+        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mx.init.Xavier())
         pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=layer, name='fc_'+str(i))
         pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i))
 
@@ -87,7 +87,7 @@ def get_model(model_type='neumf', factor_size_mlp=128, factor_size_gmf=64,
     else:
         raise ValueError('Unsupported ncf model %s.' % model_type)
 
-    final_weight = mx.sym.Variable('final_weight', init=mx.init.Xavier(factor_type="in"))
+    final_weight = mx.sym.Variable('fc_final_weight', init=mx.init.Xavier(factor_type="in"))
     net = mx.sym.FullyConnected(data=net, weight=final_weight, num_hidden=num_hidden, name='fc_final') 
     # net = mx.sym.Flatten(data=net)
    
