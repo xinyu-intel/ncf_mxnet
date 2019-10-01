@@ -2,4 +2,5 @@ mxnet-mkl>=1.5.1
 pandas
 numpy
 tqdm
+nose
 mlperf_compliance
