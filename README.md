@@ -70,16 +70,16 @@ python ncf.py --deploy --prefix=./model/ml-20m/neumf --calibration
 
 ```
 # neumf float32 inference on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf
+python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf
 # neumf int8 inference on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf-quantized
+python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized
 ```
 
 ## Benchmark
 
 ```
 # neumf float32 benchmark on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf --benchmark
+python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf --benchmark
 # neumf int8 benchmark on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1024 --prefix=./model/ml-20m/neumf-quantized --benchmark
+python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized --benchmark
 ```
