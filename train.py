@@ -39,10 +39,8 @@ parser.add_argument('--dataset', nargs='?', default='ml-20m',
                     help='The dataset name.')
 parser.add_argument('--batch-size', type=int, default=2048,
                     help='number of training examples per batch')
-parser.add_argument('--eval-batch-size', type=int, default=100,
-                    help='number of evaluate examples per batch')
-parser.add_argument('--num-valid', type=int, default=1000,
-                    help='Number of examples for evaluation')                   
+parser.add_argument('--eval-batch-size', type=int, default=1000,
+                    help='number of evaluate examples per batch')                  
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
 parser.add_argument('--layers', default='[256, 128, 64]',
@@ -53,7 +51,7 @@ parser.add_argument('--num-hidden', type=int, default=1,
                     help="num-hidden of neumf fc layer")
 parser.add_argument('--log-interval', type=int, default=100,
                     help='logging interval')
-parser.add_argument('--learning-rate', type=float, default=0.0002,
+parser.add_argument('--learning-rate', type=float, default=0.0005,
                     help='learning rate for optimizer')
 parser.add_argument('--beta1', '-b1', type=float, default=0.9,
                     help='beta1 for Adam')
@@ -83,7 +81,6 @@ if __name__ == '__main__':
 
     batch_size = args.batch_size
     eval_batch_size = args.eval_batch_size
-    num_valid=args.num_valid
     model_type = args.model_type
     model_layers = eval(args.layers)
     factor_size_gmf = args.factor_size_gmf
@@ -99,7 +96,6 @@ if __name__ == '__main__':
     num_negatives = 4
     epoch = args.epoch
     log_interval = args.log_interval
-    evaluation_threads = mp.cpu_count()
 
     # prepare dataset
     logging.info('Prepare Dataset')
@@ -108,7 +104,6 @@ if __name__ == '__main__':
     logging.info("Load training data done. #user=%d, #item=%d, #test=%d" 
                 %(max_user, max_movies, len(testRatings)))
     train_iter = get_train_iters(train, num_negatives, batch_size)
-    val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, eval_batch_size)
     logging.info('Prepare Dataset completed')
     # construct the model
     net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
@@ -144,7 +139,7 @@ if __name__ == '__main__':
             os.makedirs(model_path)
         mod.save_checkpoint(os.path.join(model_path, model_type), epoch)
         # compute hit ratio
-        (hits, ndcgs) = evaluate_model(mod, val_iter, num_items, num_valid, topK, eval_batch_size, evaluation_threads)
+        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, test_batch_size)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         logging.info('Iteration %d: HR = %.4f, NDCG = %.4f'  % (epoch, hr, ndcg))
         # best hit ratio

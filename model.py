@@ -17,14 +17,14 @@
 # 
 import mxnet as mx
 import numpy as np
-# def golorot_uniform(fan_in, fan_out):
-#     limit = np.sqrt(6. / (fan_in + fan_out))
-#     return random.uniform(-limit, limit, shape=(fan_out,fan_in)).asnumpy()
 
-#     def lecunn_uniform(layer):
-#         fan_in, fan_out = layer.in_features, layer.out_features  # noqa: F841, E501
-#         limit = np.sqrt(3. / fan_in)
-#         layer.weight.data.uniform_(-limit, limit)
+def golorot_uniform(fan_in, fan_out):
+    limit = np.sqrt(6. / (fan_in + fan_out))
+    return mx.nd.random.uniform(-limit, limit, shape=(fan_out,fan_in))
+
+def lecunn_uniform(fan_in):
+    limit = np.sqrt(3. / fan_in)
+    return mx.nd.random.uniform(-limit, limit)
 
 def mlp(user, item, factor_size, model_layers, max_user, max_item, sparse):
     stype = 'row_sparse' if sparse else 'default'
@@ -37,11 +37,11 @@ def mlp(user, item, factor_size, model_layers, max_user, max_item, sparse):
     pre_gemm_concat = mx.sym.concat(embed_user, embed_item, dim=1, name='pre_gemm_concat')
 
     for i, layer in enumerate(model_layers):
-        # if i==0:
-        #     mlp_weight=golorot_uniform(2*factor_size,layer[i])
-        # else:
-        #     mlp_weight=golorot_uniform(layer[i-1],layer[i])
-        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mx.init.Xavier())
+        if i==0:
+            mlp_weight_init=golorot_uniform(2*factor_size,layer[i])
+        else:
+            mlp_weight_init=golorot_uniform(layer[i-1],layer[i])
+        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mlp_weight_init)
         pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=layer, name='fc_'+str(i))
         pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i))
 
@@ -87,9 +87,8 @@ def get_model(model_type='neumf', factor_size_mlp=128, factor_size_gmf=64,
     else:
         raise ValueError('Unsupported ncf model %s.' % model_type)
 
-    final_weight = mx.sym.Variable('fc_final_weight', init=mx.init.Xavier(factor_type="in"))
+    final_weight = mx.sym.Variable('fc_final_weight', init=lecunn_uniform(factor_size_gmf + model_layers[-1]))
     net = mx.sym.FullyConnected(data=net, weight=final_weight, num_hidden=num_hidden, name='fc_final') 
-    # net = mx.sym.Flatten(data=net)
    
     y_label = mx.sym.Variable('softmax_label')
     net = mx.symbol.LogisticRegressionOutput(data=net, label=y_label, name='sigmoid_final')
