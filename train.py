@@ -139,7 +139,7 @@ if __name__ == '__main__':
             os.makedirs(model_path)
         mod.save_checkpoint(os.path.join(model_path, model_type), epoch)
         # compute hit ratio
-        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, test_batch_size)
+        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, eval_batch_size)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         logging.info('Iteration %d: HR = %.4f, NDCG = %.4f'  % (epoch, hr, ndcg))
         # best hit ratio

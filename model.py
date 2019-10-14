@@ -18,13 +18,25 @@
 import mxnet as mx
 import numpy as np
 
-def golorot_uniform(fan_in, fan_out):
-    limit = np.sqrt(6. / (fan_in + fan_out))
-    return mx.nd.random.uniform(-limit, limit, shape=(fan_out,fan_in))
+@mx.init.register
+class golorot_uniform(mx.init.Initializer):
+    def __init__(self, fan_in, fan_out):
+        super(golorot_uniform, self).__init__(fan_in=fan_in, fan_out=fan_out)
+        self._fan_in = fan_in
+        self._fan_out = fan_out
+    def _init_weight(self, _, arr):
+        limit = np.sqrt(6. / (self._fan_in + self._fan_out))
+        arr[:] = mx.random.uniform(-limit, limit)
 
-def lecunn_uniform(fan_in):
-    limit = np.sqrt(3. / fan_in)
-    return mx.nd.random.uniform(-limit, limit)
+@mx.init.register
+class lecunn_uniform(mx.init.Initializer):
+    def __init__(self, fan_in):
+        super(lecunn_uniform, self).__init__(fan_in=fan_in)
+        self._fan_in = fan_in
+    def _init_weight(self, _, arr):
+        limit = np.sqrt(3. / self._fan_in)
+        arr[:] = mx.random.uniform(-limit, limit)
+
 
 def mlp(user, item, factor_size, model_layers, max_user, max_item, sparse):
     stype = 'row_sparse' if sparse else 'default'
@@ -38,10 +50,10 @@ def mlp(user, item, factor_size, model_layers, max_user, max_item, sparse):
 
     for i, layer in enumerate(model_layers):
         if i==0:
-            mlp_weight_init=golorot_uniform(2 * factor_size, model_layers[i])
+            mlp_weight_init = golorot_uniform(2 * factor_size, model_layers[i])
         else:
-            mlp_weight_init=golorot_uniform(model_layers[i-1], model_layers[i])
-        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mx.init.Constant(mlp_weight_init))
+            mlp_weight_init = golorot_uniform(model_layers[i-1], model_layers[i])
+        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mlp_weight_init)
         pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=layer, name='fc_'+str(i))
         pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i))
 
@@ -87,7 +99,7 @@ def get_model(model_type='neumf', factor_size_mlp=128, factor_size_gmf=64,
     else:
         raise ValueError('Unsupported ncf model %s.' % model_type)
 
-    final_weight = mx.sym.Variable('fc_final_weight', init=mx.init.Constant(lecunn_uniform(factor_size_gmf + model_layers[-1])))
+    final_weight = mx.sym.Variable('fc_final_weight', init=lecunn_uniform(factor_size_gmf + model_layers[-1]))
     net = mx.sym.FullyConnected(data=net, weight=final_weight, num_hidden=num_hidden, name='fc_final') 
    
     y_label = mx.sym.Variable('softmax_label')
