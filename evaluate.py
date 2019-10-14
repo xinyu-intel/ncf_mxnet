@@ -21,6 +21,7 @@ import random
 import numpy as np
 import logging
 import mxnet as mx
+from functools import partial
 import multiprocessing
 
 def get_movielens_iter(filename, batch_size, logger):
@@ -112,6 +113,64 @@ def calculate(i, item, num_items, predictions, K, batch_label):
     hr = getHitRatio(ranklist, batch_label[i])
     ndcg = getNDCG(ranklist, batch_label[i])
     return (hr, ndcg)
+
+def predict(model, users, items, batch_size=1000):
+    user = mx.nd.array(users, dtype='int32')
+    item = mx.nd.array(items, dtype='int32')
+    label = mx.nd.zeros(len(user))
+    data = {'user': user, 'item': item}
+    label = {'softmax_label':label}
+    eval_iter = mx.io.NDArrayIter(data=data, label=label, batch_size=batch_size)
+    preds = []
+    for batch in eval_iter:
+        model.forward(batch)
+        mx.nd.waitall()
+        outp = model.get_outputs()[0].asnumpy()
+        preds += list(outp.flatten())
+    return preds
+
+def _calculate_hit(ranked, test_item):
+    return int(test_item in ranked)
+
+
+def _calculate_ndcg(ranked, test_item):
+    for i, item in enumerate(ranked):
+        if item == test_item:
+            return math.log(2) / math.log(i + 2)
+    return 0.
+
+def eval_one(rating, items, model, K):
+    user = rating[0]
+    test_item = rating[1]
+    items.append(test_item)
+    users = [user] * len(items)
+    predictions = predict(model, users, items)
+
+    map_item_score = {item: pred for item, pred in zip(items, predictions)}
+    ranked = heapq.nlargest(K, map_item_score, key=map_item_score.get)
+
+    hit = _calculate_hit(ranked, test_item)
+    ndcg = _calculate_ndcg(ranked, test_item)
+    return hit, ndcg, len(predictions)
+
+def eval_(model, ratings, negs, K, batch_size, evaluation_threads):
+    if evaluation_threads > 1:
+        pool = multiprocessing.Pool(processes=evaluation_threads)
+        _eval_one = partial(eval_one, model=model, K=K)
+        with pool as workers:
+            hits_ndcg_numpred = workers.map(_eval_one, zip(ratings, negs))
+        hits, ndcgs, num_preds = zip(*hits_ndcg_numpred)
+    else:
+        hits, ndcgs, num_preds = [], [], []
+        index = 0
+        for rating, items in zip(ratings, negs):
+            index += 1
+            hit, ndcg, num_pred = eval_one(rating, items, model, K)
+            hits.append(hit)
+            ndcgs.append(ndcg)
+            num_preds.append(num_pred)
+            print('evaluating test data {} / {}'.format(index, len(ratings)))
+    return hits, ndcgs
 
 def evaluate_model(model, eval_iter, num_items, num_valid, K, batch_size, evaluation_threads):
     print("start evaluating...")

@@ -96,7 +96,7 @@ if __name__ == '__main__':
     num_calib_batches = args.num_calib_batches
     ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
     topK = 10
-    evaluation_threads = mp.cpu_count()
+    evaluation_threads = 1#mp.cpu_count()
 
     # prepare dataset
     if not benchmark and not args.calibration:
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         testRatings, testNegatives, max_user, max_movies = data.testRatings, data.testNegatives, data.num_users, data.num_items
         logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
                     %(max_user, max_movies, len(testRatings)))
-        val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, batch_size)
+        # val_iter, num_items = get_eval_iters(testRatings, testNegatives, num_valid, batch_size)
         logging.info('Prepare Dataset completed')
     else:
         val_iter = get_movielens_iter(args.path + args.dataset + '/test-ratings.csv', batch_size, logger=logging)
@@ -181,6 +181,6 @@ if __name__ == '__main__':
             logging.info('Inference speed %.4f fps' % fps)
 
         else:
-            (hits, ndcgs) = evaluate_model(mod, val_iter, num_items, num_valid, topK, batch_size, evaluation_threads)
+            (hits, ndcgs) = eval_(mod, testRatings, testNegatives, topK, batch_size, evaluation_threads)
             hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
             logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
