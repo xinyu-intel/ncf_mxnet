@@ -103,7 +103,7 @@ if __name__ == '__main__':
     train, testRatings, testNegatives, max_user, max_movies = data.trainMatrix, data.testRatings, data.testNegatives, data.num_users, data.num_items
     logging.info("Load training data done. #user=%d, #item=%d, #test=%d" 
                 %(max_user, max_movies, len(testRatings)))
-    train_iter = get_train_iters(train, num_negatives, batch_size)
+    train_iter = get_train_iters(train, num_negatives, batch_size, ctx)
     logging.info('Prepare Dataset completed')
     # construct the model
     net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
@@ -139,7 +139,7 @@ if __name__ == '__main__':
             os.makedirs(model_path)
         mod.save_checkpoint(os.path.join(model_path, model_type), epoch)
         # compute hit ratio
-        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, eval_batch_size)
+        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, eval_batch_size, ctx)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         logging.info('Iteration %d: HR = %.4f, NDCG = %.4f'  % (epoch, hr, ndcg))
         # best hit ratio

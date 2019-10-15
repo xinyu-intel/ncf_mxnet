@@ -106,7 +106,7 @@ if __name__ == '__main__':
                     %(max_user, max_movies, len(testRatings)))
         logging.info('Prepare Dataset completed')
     else:
-        val_iter = get_movielens_iter(args.path + args.dataset + '/test-ratings.csv', batch_size, logger=logging)
+        val_iter = get_movielens_iter(args.path + args.dataset + '/test-ratings.csv', batch_size, ctx=ctx, logger=logging)
         max_user, max_movies = 138493, 26744
     # construct the model
     if args.deploy:
