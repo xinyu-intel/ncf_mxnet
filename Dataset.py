@@ -61,22 +61,6 @@ class Dataset(object):
                 line = f.readline()
         return negativeList
     
-    def load_rating_file_as_matrix(self, filename):
-        '''
-        Read .rating file and Return dok matrix.
-        The first line of .rating file is: num_users\t num_items
-        '''
-        # Construct matrix
-        mat = sp.dok_matrix((self.num_users, self.num_items), dtype=np.float32)
-        with open(filename, "r") as f:
-            line = f.readline()
-            while line != None and line != "":
-                arr = line.split("\t")
-                user, item = int(arr[0]), int(arr[1])
-                mat[user, item] = 1.0
-                line = f.readline()    
-        return mat
-
     def _load_train_matrix(self, filename):
         def process_line(line):
             tmp = line.split('\t')
@@ -92,3 +76,4 @@ class Dataset(object):
         for user, item, _ in data:
             mat[user, item] = 1.
         return mat
+
