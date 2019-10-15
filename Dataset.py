@@ -34,10 +34,7 @@ class Dataset(object):
         self.testNegatives = self.load_negative_file(path + "/test-negative.csv")
         assert len(self.testRatings) == len(self.testNegatives)
         if is_train:
-            self.data_raw = pd.read_csv(path + "/ratings.csv", sep=',', usecols=(0, 1, 2))
-            self.trainMatrix = self.load_rating_file_as_matrix(path + "/train-ratings.csv")
-            self.num_users = np.unique(self.data_raw['userId']).shape[0] #138493
-            self.num_items = np.unique(self.data_raw['movieId']).shape[0] #26744
+            self.trainMatrix = self._load_train_matrix(path + "/train-ratings.csv")
 
 
     def load_rating_file_as_list(self, filename):
@@ -78,4 +75,20 @@ class Dataset(object):
                 user, item = int(arr[0]), int(arr[1])
                 mat[user, item] = 1.0
                 line = f.readline()    
+        return mat
+
+    def _load_train_matrix(self, filename):
+        def process_line(line):
+            tmp = line.split('\t')
+            return [int(tmp[0]), int(tmp[1]), float(tmp[2]) > 0]
+        with open(filename, 'r') as file:
+            data = list(map(process_line, file))
+        self.num_users = max(data, key=lambda x: x[0])[0] + 1
+        self.num_items = max(data, key=lambda x: x[1])[1] + 1
+
+        self.data = list(filter(lambda x: x[2], data))
+        mat = sp.dok_matrix(
+                (self.num_users, self.num_items), dtype=np.float32)
+        for user, item, _ in data:
+            mat[user, item] = 1.
         return mat
