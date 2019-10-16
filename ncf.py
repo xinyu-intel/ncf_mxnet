@@ -94,7 +94,7 @@ if __name__ == '__main__':
     calib_mode = args.calib_mode
     quantized_dtype = args.quantized_dtype
     num_calib_batches = args.num_calib_batches
-    ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
+    ctx = mx.cpu() if args.gpu is None else mx.gpu(args.gpu)
     topK = 10
 
     # prepare dataset

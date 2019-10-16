@@ -59,7 +59,7 @@ parser.add_argument('--beta2', '-b2', type=float, default=0.999,
                     help='beta1 for Adam')
 parser.add_argument('--eps', type=float, default=1e-8,
                     help='eps for Adam')
-parser.add_argument('--gpus', type=str,
+parser.add_argument('--gpu', type=int, default=None,
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
 parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
 parser.add_argument('--epoch', type=int, default=0, help='training epoch')
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     beta2=args.beta2
     eps=args.eps
     sparse = args.sparse
-    ctx = [mx.gpu(int(i)) for i in args.gpus.split(',')] if args.gpus else mx.cpu()
+    ctx = mx.cpu() if args.gpu is None else mx.gpu(args.gpu)
     topK = 10
     num_negatives = 4
     epoch = args.epoch
