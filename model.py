@@ -26,7 +26,7 @@ class golorot_uniform(mx.init.Initializer):
         self._fan_out = fan_out
     def _init_weight(self, _, arr):
         limit = np.sqrt(6. / (self._fan_in + self._fan_out))
-        arr[:] = mx.random.uniform(-limit, limit)
+        mx.random.uniform(-limit, limit, out=arr)
 
 @mx.init.register
 class lecunn_uniform(mx.init.Initializer):
@@ -35,7 +35,7 @@ class lecunn_uniform(mx.init.Initializer):
         self._fan_in = fan_in
     def _init_weight(self, _, arr):
         limit = np.sqrt(3. / self._fan_in)
-        arr[:] = mx.random.uniform(-limit, limit)
+        mx.random.uniform(-limit, limit, out=arr)
 
 
 def mlp(user, item, factor_size, model_layers, max_user, max_item, sparse):
