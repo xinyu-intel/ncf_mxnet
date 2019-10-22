@@ -109,12 +109,12 @@ def _calculate_ndcg(ranked, test_item):
             return math.log(2) / math.log(i + 2)
     return 0.
 
-def eval_one(rating, items, model, K, ctx):
+def eval_one(rating, items, model, K, batch_size, ctx):
     user = rating[0]
     test_item = rating[1]
     items.append(test_item)
     users = [user] * len(items)
-    predictions = predict(model, users, items, ctx)
+    predictions = predict(model, users, items, batch_size, ctx)
 
     map_item_score = {item: pred for item, pred in zip(items, predictions)}
     ranked = heapq.nlargest(K, map_item_score, key=map_item_score.get)
@@ -128,7 +128,7 @@ def evaluate_model(model, ratings, negs, K, batch_size, ctx):
     index = 0
     for rating, items in zip(ratings, negs):
         index += 1
-        hit, ndcg, num_pred = eval_one(rating, items, model, K, ctx)
+        hit, ndcg, num_pred = eval_one(rating, items, model, K, batch_size, ctx)
         hits.append(hit)
         ndcgs.append(ndcg)
         num_preds.append(num_pred)
