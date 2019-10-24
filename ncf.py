@@ -137,7 +137,7 @@ if __name__ == '__main__':
     mod.set_params(arg_params, aux_params)
 
     if args.calibration:
-        excluded_sym_names = ['post_gemm_concat', 'pre_gemm_concat', 'fc_final']
+        excluded_sym_names = ['post_gemm_concat', 'fc_final']
         logging.info('Quantizing FP32 model')
         cqsym, cqarg_params, aux_params, collector = quantize_graph(sym=net, arg_params=arg_params, aux_params=aux_params,
                                                                     excluded_sym_names=excluded_sym_names,
@@ -179,6 +179,6 @@ if __name__ == '__main__':
             logging.info('Inference speed %.4f fps' % fps)
 
         else:
-            (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, batch_size)
+            (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, batch_size, ctx, logging)
             hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
             logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))

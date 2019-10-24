@@ -52,8 +52,8 @@ python export/export.py
 
 |dtype|HR|NDCG|
 |:---:|:--:|:--:|
-|float32|0.6327|0.3809|
-|int8|0.6330|0.3812|
+|float32|0.6393|0.3849|
+|int8|0.6366|0.3824|
 
 ## Training
 

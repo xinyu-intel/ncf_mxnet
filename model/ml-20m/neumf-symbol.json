@@ -2,27 +2,22 @@
   "nodes": [
     {
       "op": "null", 
-      "name": "data0", 
+      "name": "user", 
       "inputs": []
     }, 
     {
       "op": "null", 
-      "name": "embedding0_weight", 
+      "name": "gmf_user_weight", 
       "attrs": {
-        "__dtype__": "0", 
         "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(138493, 64)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
+        "__storage_type__": "0"
       }, 
       "inputs": []
     }, 
     {
       "op": "Embedding", 
-      "name": "embedding0_fwd", 
+      "name": "embed_user64", 
       "attrs": {
-        "dtype": "float32", 
         "input_dim": "138493", 
         "output_dim": "64", 
         "sparse_grad": "False"
@@ -31,27 +26,22 @@
     }, 
     {
       "op": "null", 
-      "name": "data1", 
+      "name": "item", 
       "inputs": []
     }, 
     {
       "op": "null", 
-      "name": "embedding1_weight", 
+      "name": "gmf_item_weight", 
       "attrs": {
-        "__dtype__": "0", 
         "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(26744, 64)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
+        "__storage_type__": "0"
       }, 
       "inputs": []
     }, 
     {
       "op": "Embedding", 
-      "name": "embedding1_fwd", 
+      "name": "embed_item64", 
       "attrs": {
-        "dtype": "float32", 
         "input_dim": "26744", 
         "output_dim": "64", 
         "sparse_grad": "False"
@@ -60,27 +50,22 @@
     }, 
     {
       "op": "elemwise_mul", 
-      "name": "neumf0__mul0", 
+      "name": "_mul0", 
       "inputs": [[2, 0, 0], [5, 0, 0]]
     }, 
     {
       "op": "null", 
-      "name": "embedding2_weight", 
+      "name": "mlp_user_weight", 
       "attrs": {
-        "__dtype__": "0", 
         "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(138493, 128)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
+        "__storage_type__": "0"
       }, 
       "inputs": []
     }, 
     {
       "op": "Embedding", 
-      "name": "embedding2_fwd", 
+      "name": "embed_user128", 
       "attrs": {
-        "dtype": "float32", 
         "input_dim": "138493", 
         "output_dim": "128", 
         "sparse_grad": "False"
@@ -89,22 +74,17 @@
     }, 
     {
       "op": "null", 
-      "name": "embedding3_weight", 
+      "name": "mlp_item_weight", 
       "attrs": {
-        "__dtype__": "0", 
         "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(26744, 128)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
+        "__storage_type__": "0"
       }, 
       "inputs": []
     }, 
     {
       "op": "Embedding", 
-      "name": "embedding3_fwd", 
+      "name": "embed_item128", 
       "attrs": {
-        "dtype": "float32", 
         "input_dim": "26744", 
         "output_dim": "128", 
         "sparse_grad": "False"
@@ -113,7 +93,7 @@
     }, 
     {
       "op": "Concat", 
-      "name": "neumf0_concat0", 
+      "name": "pre_gemm_concat", 
       "attrs": {
         "dim": "1", 
         "num_args": "2"
@@ -122,133 +102,79 @@
     }, 
     {
       "op": "null", 
-      "name": "dense0_weight", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "[\"golorot_uniform\", {\"fan_in\": 128, \"fan_out\": 256}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(256, 0)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_0_weight", 
+      "attrs": {"__init__": "[\"golorot_uniform\", {\"fan_in\": 256, \"fan_out\": 256}]"}, 
       "inputs": []
     }, 
     {
       "op": "null", 
-      "name": "dense0_bias", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "zeros", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(256,)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_0_bias", 
+      "attrs": {"num_hidden": "256"}, 
       "inputs": []
     }, 
     {
       "op": "FullyConnected", 
-      "name": "dense0_fwd", 
-      "attrs": {
-        "flatten": "True", 
-        "no_bias": "False", 
-        "num_hidden": "256"
-      }, 
+      "name": "fc_0", 
+      "attrs": {"num_hidden": "256"}, 
       "inputs": [[11, 0, 0], [12, 0, 0], [13, 0, 0]]
     }, 
     {
       "op": "Activation", 
-      "name": "dense0_relu_fwd", 
+      "name": "act_0", 
       "attrs": {"act_type": "relu"}, 
       "inputs": [[14, 0, 0]]
     }, 
     {
       "op": "null", 
-      "name": "dense1_weight", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "[\"golorot_uniform\", {\"fan_in\": 256, \"fan_out\": 128}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(128, 0)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_1_weight", 
+      "attrs": {"__init__": "[\"golorot_uniform\", {\"fan_in\": 256, \"fan_out\": 128}]"}, 
       "inputs": []
     }, 
     {
       "op": "null", 
-      "name": "dense1_bias", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "zeros", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(128,)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_1_bias", 
+      "attrs": {"num_hidden": "128"}, 
       "inputs": []
     }, 
     {
       "op": "FullyConnected", 
-      "name": "dense1_fwd", 
-      "attrs": {
-        "flatten": "True", 
-        "no_bias": "False", 
-        "num_hidden": "128"
-      }, 
+      "name": "fc_1", 
+      "attrs": {"num_hidden": "128"}, 
       "inputs": [[15, 0, 0], [16, 0, 0], [17, 0, 0]]
     }, 
     {
       "op": "Activation", 
-      "name": "dense1_relu_fwd", 
+      "name": "act_1", 
       "attrs": {"act_type": "relu"}, 
       "inputs": [[18, 0, 0]]
     }, 
     {
       "op": "null", 
-      "name": "dense2_weight", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "[\"golorot_uniform\", {\"fan_in\": 128, \"fan_out\": 64}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(64, 0)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_2_weight", 
+      "attrs": {"__init__": "[\"golorot_uniform\", {\"fan_in\": 128, \"fan_out\": 64}]"}, 
       "inputs": []
     }, 
     {
       "op": "null", 
-      "name": "dense2_bias", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "zeros", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(64,)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_2_bias", 
+      "attrs": {"num_hidden": "64"}, 
       "inputs": []
     }, 
     {
       "op": "FullyConnected", 
-      "name": "dense2_fwd", 
-      "attrs": {
-        "flatten": "True", 
-        "no_bias": "False", 
-        "num_hidden": "64"
-      }, 
+      "name": "fc_2", 
+      "attrs": {"num_hidden": "64"}, 
       "inputs": [[19, 0, 0], [20, 0, 0], [21, 0, 0]]
     }, 
     {
       "op": "Activation", 
-      "name": "dense2_relu_fwd", 
+      "name": "act_2", 
       "attrs": {"act_type": "relu"}, 
       "inputs": [[22, 0, 0]]
     }, 
     {
       "op": "Concat", 
-      "name": "neumf0_concat1", 
+      "name": "post_gemm_concat", 
       "attrs": {
         "dim": "1", 
         "num_args": "2"
@@ -257,39 +183,31 @@
     }, 
     {
       "op": "null", 
-      "name": "dense3_weight", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "[\"lecunn_uniform\", {\"fan_in\": 128}]", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(1, 0)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_final_weight", 
+      "attrs": {"__init__": "[\"lecunn_uniform\", {\"fan_in\": 128}]"}, 
       "inputs": []
     }, 
     {
       "op": "null", 
-      "name": "dense3_bias", 
-      "attrs": {
-        "__dtype__": "0", 
-        "__init__": "zeros", 
-        "__lr_mult__": "1.0", 
-        "__shape__": "(1,)", 
-        "__storage_type__": "0", 
-        "__wd_mult__": "1.0"
-      }, 
+      "name": "fc_final_bias", 
+      "attrs": {"num_hidden": "1"}, 
       "inputs": []
     }, 
     {
       "op": "FullyConnected", 
-      "name": "dense3_fwd", 
-      "attrs": {
-        "flatten": "True", 
-        "no_bias": "False", 
-        "num_hidden": "1"
-      }, 
+      "name": "fc_final", 
+      "attrs": {"num_hidden": "1"}, 
       "inputs": [[24, 0, 0], [25, 0, 0], [26, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "softmax_label", 
+      "inputs": []
+    }, 
+    {
+      "op": "LogisticRegressionOutput", 
+      "name": "sigmoid_final", 
+      "inputs": [[27, 0, 0], [28, 0, 0]]
     }
   ], 
   "arg_nodes": [
@@ -306,7 +224,8 @@
     20, 
     21, 
     25, 
-    26
+    26, 
+    28
   ], 
   "node_row_ptr": [
     0, 
@@ -337,8 +256,10 @@
     25, 
     26, 
     27, 
-    28
+    28, 
+    29, 
+    30
   ], 
-  "heads": [[27, 0, 0]], 
+  "heads": [[29, 0, 0]], 
   "attrs": {"mxnet_version": ["int", 10501]}
 }

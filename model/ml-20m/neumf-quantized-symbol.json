@@ -7,22 +7,28 @@
     }, 
     {
       "op": "null", 
-      "name": "gmf_user_weight", 
-      "attrs": {
-        "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__storage_type__": "0"
-      }, 
+      "name": "gmf_user_weight_quantize", 
       "inputs": []
     }, 
     {
-      "op": "Embedding", 
-      "name": "embed_user64", 
+      "op": "null", 
+      "name": "gmf_user_weight_quantize_min", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "gmf_user_weight_quantize_max", 
+      "inputs": []
+    }, 
+    {
+      "op": "_contrib_quantized_embedding", 
+      "name": "quantized_embed_user64", 
       "attrs": {
         "input_dim": "138493", 
         "output_dim": "64", 
         "sparse_grad": "False"
       }, 
-      "inputs": [[0, 0, 0], [1, 0, 0]]
+      "inputs": [[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0]]
     }, 
     {
       "op": "null", 
@@ -31,84 +37,101 @@
     }, 
     {
       "op": "null", 
-      "name": "gmf_item_weight", 
-      "attrs": {
-        "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__storage_type__": "0"
-      }, 
+      "name": "gmf_item_weight_quantize", 
       "inputs": []
     }, 
     {
-      "op": "Embedding", 
-      "name": "embed_item64", 
+      "op": "null", 
+      "name": "gmf_item_weight_quantize_min", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "gmf_item_weight_quantize_max", 
+      "inputs": []
+    }, 
+    {
+      "op": "_contrib_quantized_embedding", 
+      "name": "quantized_embed_item64", 
       "attrs": {
         "input_dim": "26744", 
         "output_dim": "64", 
         "sparse_grad": "False"
       }, 
-      "inputs": [[3, 0, 0], [4, 0, 0]]
+      "inputs": [[5, 0, 0], [6, 0, 0], [7, 0, 0], [8, 0, 0]]
     }, 
     {
-      "op": "elemwise_mul", 
-      "name": "_mul0", 
-      "inputs": [[2, 0, 0], [5, 0, 0]]
+      "op": "_contrib_quantized_elemwise_mul", 
+      "name": "quantized__mul0", 
+      "attrs": {
+        "max_calib_range": "4.937704", 
+        "min_calib_range": "-3.313296"
+      }, 
+      "inputs": [[4, 0, 0], [9, 0, 0], [4, 1, 0], [4, 2, 0], [9, 1, 0], [9, 2, 0]]
+    }, 
+    {
+      "op": "_contrib_dequantize", 
+      "name": "_mul0_dequantize", 
+      "inputs": [[10, 0, 0], [10, 1, 0], [10, 2, 0]]
     }, 
     {
       "op": "null", 
-      "name": "mlp_user_weight", 
-      "attrs": {
-        "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__storage_type__": "0"
-      }, 
+      "name": "mlp_user_weight_quantize", 
       "inputs": []
     }, 
     {
-      "op": "Embedding", 
-      "name": "embed_user128", 
+      "op": "null", 
+      "name": "mlp_user_weight_quantize_min", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "mlp_user_weight_quantize_max", 
+      "inputs": []
+    }, 
+    {
+      "op": "_contrib_quantized_embedding", 
+      "name": "quantized_embed_user128", 
       "attrs": {
         "input_dim": "138493", 
         "output_dim": "128", 
         "sparse_grad": "False"
       }, 
-      "inputs": [[0, 0, 0], [7, 0, 0]]
+      "inputs": [[0, 0, 0], [12, 0, 0], [13, 0, 0], [14, 0, 0]]
     }, 
     {
       "op": "null", 
-      "name": "mlp_item_weight", 
-      "attrs": {
-        "__init__": "[\"normal\", {\"sigma\": 0.01}]", 
-        "__storage_type__": "0"
-      }, 
+      "name": "mlp_item_weight_quantize", 
       "inputs": []
     }, 
     {
-      "op": "Embedding", 
-      "name": "embed_item128", 
+      "op": "null", 
+      "name": "mlp_item_weight_quantize_min", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "mlp_item_weight_quantize_max", 
+      "inputs": []
+    }, 
+    {
+      "op": "_contrib_quantized_embedding", 
+      "name": "quantized_embed_item128", 
       "attrs": {
         "input_dim": "26744", 
         "output_dim": "128", 
         "sparse_grad": "False"
       }, 
-      "inputs": [[3, 0, 0], [9, 0, 0]]
+      "inputs": [[5, 0, 0], [16, 0, 0], [17, 0, 0], [18, 0, 0]]
     }, 
     {
-      "op": "Concat", 
-      "name": "pre_gemm_concat", 
+      "op": "_contrib_quantized_concat", 
+      "name": "quantized_pre_gemm_concat", 
       "attrs": {
         "dim": "1", 
         "num_args": "2"
       }, 
-      "inputs": [[8, 0, 0], [10, 0, 0]]
-    }, 
-    {
-      "op": "_contrib_quantize_v2", 
-      "name": "pre_gemm_concat_output_quantize", 
-      "attrs": {
-        "max_calib_range": "3.305993", 
-        "min_calib_range": "-2.425891", 
-        "out_type": "auto"
-      }, 
-      "inputs": [[11, 0, 0]]
+      "inputs": [[15, 0, 0], [19, 0, 0], [15, 1, 0], [15, 2, 0], [19, 1, 0], [19, 2, 0]]
     }, 
     {
       "op": "null", 
@@ -144,12 +167,12 @@
       "op": "_sg_mkldnn_fully_connected", 
       "name": "quantized_sg_mkldnn_fully_connected_eltwise_0", 
       "attrs": {
-        "max_calib_range": "26.685230", 
+        "max_calib_range": "28.537586", 
         "min_calib_range": "0.000000", 
         "quantized": "True", 
         "with_eltwise": "True"
       }, 
-      "inputs": [[12, 0, 0], [13, 0, 0], [14, 0, 0], [12, 1, 0], [12, 2, 0], [15, 0, 0], [16, 0, 0], [17, 0, 0], [18, 0, 0]], 
+      "inputs": [[20, 0, 0], [21, 0, 0], [22, 0, 0], [20, 1, 0], [20, 2, 0], [23, 0, 0], [24, 0, 0], [25, 0, 0], [26, 0, 0]], 
       "subgraphs": [
         {
           "nodes": [
@@ -221,12 +244,12 @@
       "op": "_sg_mkldnn_fully_connected", 
       "name": "quantized_sg_mkldnn_fully_connected_eltwise_1", 
       "attrs": {
-        "max_calib_range": "56.053070", 
+        "max_calib_range": "58.899498", 
         "min_calib_range": "0.000000", 
         "quantized": "True", 
         "with_eltwise": "True"
       }, 
-      "inputs": [[19, 0, 0], [20, 0, 0], [21, 0, 0], [19, 1, 0], [19, 2, 0], [22, 0, 0], [23, 0, 0], [24, 0, 0], [25, 0, 0]], 
+      "inputs": [[27, 0, 0], [28, 0, 0], [29, 0, 0], [27, 1, 0], [27, 2, 0], [30, 0, 0], [31, 0, 0], [32, 0, 0], [33, 0, 0]], 
       "subgraphs": [
         {
           "nodes": [
@@ -302,7 +325,7 @@
         "quantized": "True", 
         "with_eltwise": "True"
       }, 
-      "inputs": [[26, 0, 0], [27, 0, 0], [28, 0, 0], [26, 1, 0], [26, 2, 0], [29, 0, 0], [30, 0, 0], [31, 0, 0], [32, 0, 0]], 
+      "inputs": [[34, 0, 0], [35, 0, 0], [36, 0, 0], [34, 1, 0], [34, 2, 0], [37, 0, 0], [38, 0, 0], [39, 0, 0], [40, 0, 0]], 
       "subgraphs": [
         {
           "nodes": [
@@ -347,12 +370,12 @@
         "dim": "1", 
         "num_args": "2"
       }, 
-      "inputs": [[6, 0, 0], [33, 0, 0]]
+      "inputs": [[11, 0, 0], [41, 0, 0]]
     }, 
     {
       "op": "null", 
       "name": "fc_final_weight", 
-      "attrs": {"__init__": "[\"xavier\", {\"rnd_type\": \"uniform\", \"factor_type\": \"in\", \"magnitude\": 3}]"}, 
+      "attrs": {"__init__": "[\"lecunn_uniform\", {\"fan_in\": 128}]"}, 
       "inputs": []
     }, 
     {
@@ -364,7 +387,7 @@
     {
       "op": "_sg_mkldnn_fully_connected", 
       "name": "sg_mkldnn_fully_connected_3", 
-      "inputs": [[34, 0, 0], [35, 0, 0], [36, 0, 0]], 
+      "inputs": [[42, 0, 0], [43, 0, 0], [44, 0, 0]], 
       "subgraphs": [
         {
           "nodes": [
@@ -404,37 +427,45 @@
     {
       "op": "LogisticRegressionOutput", 
       "name": "sigmoid_final", 
-      "inputs": [[37, 0, 0], [38, 0, 0]]
+      "inputs": [[45, 0, 0], [46, 0, 0]]
     }
   ], 
   "arg_nodes": [
     0, 
     1, 
+    2, 
     3, 
-    4, 
+    5, 
+    6, 
     7, 
-    9, 
+    8, 
+    12, 
     13, 
     14, 
-    15, 
     16, 
     17, 
     18, 
-    20, 
     21, 
     22, 
     23, 
     24, 
     25, 
-    27, 
+    26, 
     28, 
     29, 
     30, 
     31, 
     32, 
+    33, 
     35, 
     36, 
-    38
+    37, 
+    38, 
+    39, 
+    40, 
+    43, 
+    44, 
+    46
   ], 
   "node_row_ptr": [
     0, 
@@ -442,16 +473,12 @@
     2, 
     3, 
     4, 
-    5, 
-    6, 
     7, 
     8, 
     9, 
     10, 
     11, 
-    12, 
-    15, 
-    16, 
+    14, 
     17, 
     18, 
     19, 
@@ -461,8 +488,6 @@
     25, 
     26, 
     27, 
-    28, 
-    29, 
     30, 
     33, 
     34, 
@@ -471,14 +496,28 @@
     37, 
     38, 
     39, 
-    40, 
-    41, 
     42, 
     43, 
     44, 
     45, 
-    46
+    46, 
+    47, 
+    48, 
+    51, 
+    52, 
+    53, 
+    54, 
+    55, 
+    56, 
+    57, 
+    58, 
+    59, 
+    60, 
+    61, 
+    62, 
+    63, 
+    64
   ], 
-  "heads": [[39, 0, 0]], 
+  "heads": [[47, 0, 0]], 
   "attrs": {"mxnet_version": ["int", 10500]}
 }
