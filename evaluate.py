@@ -123,7 +123,7 @@ def eval_one(rating, items, model, K, batch_size, ctx):
     ndcg = _calculate_ndcg(ranked, test_item)
     return hit, ndcg, len(predictions)
 
-def evaluate_model(model, ratings, negs, K, batch_size, ctx):
+def evaluate_model(model, ratings, negs, K, batch_size, ctx, logger=None):
     hits, ndcgs, num_preds = [], [], []
     index = 0
     for rating, items in zip(ratings, negs):
@@ -133,6 +133,6 @@ def evaluate_model(model, ratings, negs, K, batch_size, ctx):
         ndcgs.append(ndcg)
         num_preds.append(num_pred)
         if index % batch_size == 0:
-            print('evaluating test data {} / {}'.format(index, len(ratings)))
+            logger.info('evaluating test data {} / {}'.format(index, len(ratings)))
 
     return hits, ndcgs

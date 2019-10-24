@@ -110,9 +110,12 @@ if __name__ == '__main__':
                     model_layers, num_hidden, max_user, max_movies, sparse)
 
     # initialize the module
+    
+    _, arg_params, aux_params = mx.model.load_checkpoint('./model3/ml-20m/neumf', 4)
     mod = mx.module.Module(net, context=ctx, data_names=['user', 'item'], label_names=['softmax_label'])
     mod.bind(for_training=True, data_shapes=train_iter.provide_data, label_shapes=train_iter.provide_label)
-    mod.init_params()
+    # mod.init_params()
+    mod.set_params(arg_params, aux_params)
     mod.init_optimizer(optimizer='adam', optimizer_params=[('learning_rate', learning_rate), ('beta1',beta1), ('beta2',beta2), ('epsilon',eps)])
     
     metric = mx.metric.create(cross_entropy)
@@ -121,6 +124,7 @@ if __name__ == '__main__':
     logging.info('Training started ...')
     for epoch in range(epoch):
         metric.reset()
+        train_iter = get_train_iters(train, num_negatives, batch_size, ctx)
         for nbatch, batch in enumerate(train_iter):
             mod.forward(batch)
             mod.backward()
@@ -134,12 +138,12 @@ if __name__ == '__main__':
         
         # save model
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        model_path = os.path.join(dir_path, 'model', args.dataset)
+        model_path = os.path.join(dir_path, 'model3', args.dataset)
         if not os.path.exists(model_path):
             os.makedirs(model_path)
-        mod.save_checkpoint(os.path.join(model_path, model_type), epoch)
+        mod.save_checkpoint(os.path.join(model_path, model_type), epoch+5)
         # compute hit ratio
-        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, eval_batch_size, ctx)
+        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, eval_batch_size, ctx, logging)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         logging.info('Iteration %d: HR = %.4f, NDCG = %.4f'  % (epoch, hr, ndcg))
         # best hit ratio
