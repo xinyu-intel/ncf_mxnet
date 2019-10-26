@@ -19,14 +19,13 @@ import os
 import time
 import argparse
 import logging
-import heapq
 import math
 import random
 import numpy as np
 import mxnet as mx
-from Dataset import NCFTestData
-from model import get_model
-from evaluate import *
+from core.model import get_model
+from core.dataset import NCFTestData
+from core.evaluate import *
 from mxnet.contrib.quantization import *
 
 logging.basicConfig(level=logging.DEBUG)

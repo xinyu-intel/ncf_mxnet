@@ -1,5 +1,5 @@
 import mxnet as mx
-from model import get_model
+from core.model import get_model
 
 def test_model():
     def test_ncf(model_type):

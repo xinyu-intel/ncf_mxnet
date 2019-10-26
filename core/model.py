@@ -39,9 +39,8 @@ class lecunn_uniform(mx.init.Initializer):
 
 
 def mlp(user, item, factor_size, model_layers, max_user, max_item):
-    stype = 'row_sparse' if sparse else 'default'
-    user_weight = mx.sym.Variable('mlp_user_weight', stype=stype, init=mx.init.Normal(0.01))
-    item_weight = mx.sym.Variable('mlp_item_weight', stype=stype, init=mx.init.Normal(0.01))
+    user_weight = mx.sym.Variable('mlp_user_weight', init=mx.init.Normal(0.01))
+    item_weight = mx.sym.Variable('mlp_item_weight', init=mx.init.Normal(0.01))
     embed_user = mx.sym.Embedding(data=user, weight=user_weight, input_dim=max_user,
                                   output_dim=factor_size, name='embed_user'+str(factor_size))
     embed_item = mx.sym.Embedding(data=item, weight=item_weight, input_dim=max_item,
@@ -60,9 +59,8 @@ def mlp(user, item, factor_size, model_layers, max_user, max_item):
     return pre_gemm_concat
 
 def gmf(user, item, factor_size, max_user, max_item):
-    stype = 'row_sparse' if sparse else 'default'
-    user_weight = mx.sym.Variable('gmf_user_weight', stype=stype, init=mx.init.Normal(0.01))
-    item_weight = mx.sym.Variable('gmf_item_weight', stype=stype, init=mx.init.Normal(0.01))
+    user_weight = mx.sym.Variable('gmf_user_weight', init=mx.init.Normal(0.01))
+    item_weight = mx.sym.Variable('gmf_item_weight', init=mx.init.Normal(0.01))
     embed_user = mx.sym.Embedding(data=user, weight=user_weight, input_dim=max_user,
                                   output_dim=factor_size, name='embed_user'+str(factor_size))
     embed_item = mx.sym.Embedding(data=item, weight=item_weight, input_dim=max_item,
