@@ -9,13 +9,35 @@ def test_model():
         provide_data = [mx.io.DataDesc(name='item', shape=((1,))),
                         mx.io.DataDesc(name='user', shape=((1,)))]
         provide_label = [mx.io.DataDesc(name='softmax_label', shape=((1,)))]
-        mod.bind(for_training=False, data_shapes=provide_data, label_shapes=provide_label)
+        mod.bind(for_training=True, data_shapes=provide_data, label_shapes=provide_label)
         mod.init_params(initializer=mx.init.Xavier(magnitude=2.))
-        data = [mx.nd.full(shape=shape, val=127, ctx=mx.cpu(), dtype='uint8')
+        data = [mx.nd.full(shape=shape, val=26744, ctx=mx.cpu(), dtype='int32')
                 for _, shape in mod.data_shapes]
         batch = mx.io.DataBatch(data, [])
         mod.forward(batch)
+        mod.backward()
         mx.nd.waitall()
+
+        data_dict = {'user': data[0], 'item': data[1]}
+        calib_data = mx.io.NDArrayIter(data=data_dict, batch_size=1)
+        calib_data = mx.test_utils.DummyIter(calib_data)
+        arg_params, aux_params = mod.get_params()
+        qsym, qarg_params, qaux_params = mx.contrib.quant.quantize_model_mkldnn(sym=net,
+                                                                                arg_params=arg_params,
+                                                                                aux_params=aux_params,
+                                                                                ctx=mx.cpu(),
+                                                                                quantized_dtype='auto',
+                                                                                calib_mode='naive',
+                                                                                calib_data=calib_data,
+                                                                                data_names=['user', 'item'],
+                                                                                excluded_sym_names=['post_gemm_concat', 'fc_final'],
+                                                                                num_calib_examples=1)
+        qmod = mx.module.Module(qsym, context=mx.cpu(), data_names=['user', 'item'], label_names=['softmax_label'])
+        qmod.bind(for_training=True, data_shapes=provide_data, label_shapes=provide_label)
+        qmod.set_params(qarg_params, qaux_params)
+        qmod.forward(batch)
+        mx.nd.waitall()
+
     for model_type in ['neumf', 'mlp', 'gmf']:
         test_ncf(model_type)
 
