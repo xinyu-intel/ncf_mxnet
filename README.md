@@ -42,6 +42,8 @@ test-negative.csv
 
 ## Pre-trained models
 
+We provide the pretrained ml-20m model on [Google Drive](https://drive.google.com/drive/folders/1qACR_Zhc2O2W0RrazzcepM2vJeh0MMdO?usp=sharing), you can download directly for evaluation or calibration.
+
 |dtype|HR@10|NDCG@10|
 |:---:|:--:|:--:|
 |float32|0.6393|0.3849|
@@ -54,7 +56,7 @@ test-negative.csv
 python train.py # --gpu=0
 ```
 
-# Calibration
+## Calibration
 
 ```
 # neumf calibration on ml-20m dataset
