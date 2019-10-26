@@ -24,8 +24,7 @@ import math
 import random
 import numpy as np
 import mxnet as mx
-import multiprocessing as mp
-from Dataset import Dataset
+from Dataset import NCFTestData
 from model import get_model
 from evaluate import *
 from mxnet.contrib.quantization import *
@@ -38,10 +37,12 @@ parser.add_argument('--path', nargs='?', default='./data/',
                     help='Input data path.')
 parser.add_argument('--dataset', nargs='?', default='ml-20m',
                     help='The dataset name.')
+parser.add_argument('--max-user', type=int, default=138493,
+                    help='max number of user index.')
+parser.add_argument('--max-item', type=int, default=26744,
+                    help='max number of item index.')
 parser.add_argument('--batch-size', type=int, default=256,
                     help='number of examples per batch')
-parser.add_argument('--num-valid', type=int, default=1000,
-                    help='Number of examples for evaluation')                   
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
 parser.add_argument('--layers', default='[256, 128, 64]',
@@ -50,13 +51,13 @@ parser.add_argument('--factor-size-gmf', type=int, default=64,
                     help="outdim of gmf embedding layers.")
 parser.add_argument('--num-hidden', type=int, default=1,
                     help="num-hidden of neumf fc layer")
+parser.add_argument('--topk', type=int, default=4,
+                    help="topk for accuracy evaluation.")
 parser.add_argument('--gpu', type=int, default=None,
                     help="index of gpu to run, e.g. 0 or 1. None means using cpu().")
-parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
 parser.add_argument('--benchmark', action='store_true',  help="whether to benchmark performance only")
 parser.add_argument('--epoch', type=int, default=0, help='model checkpoint index for inference')
-parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
-parser.add_argument('--prefix', default='./model/ml-20m/neumf', help="model prefix for deployment")
+parser.add_argument('--prefix', default='./model/ml-20m/neumf', help="model checkpoint prefix")
 parser.add_argument('--calibration', action='store_true', help="whether to calibrate model")
 parser.add_argument('--calib-mode', type=str, choices=['naive', 'entropy'], default='naive',
                     help='calibration mode used for generating calibration table for the quantized symbol; supports'
@@ -82,50 +83,37 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.info(args)
 
+    max_user = args.max_user
+    max_item = args.max_item
     batch_size = args.batch_size
-    num_valid=args.num_valid
     model_type = args.model_type
     model_layers = eval(args.layers)
     factor_size_gmf = args.factor_size_gmf
     factor_size_mlp = int(model_layers[0]/2)
     num_hidden = args.num_hidden
-    sparse = args.sparse
     benchmark = args.benchmark
+    calibration = args.calibration
     calib_mode = args.calib_mode
     quantized_dtype = args.quantized_dtype
     num_calib_batches = args.num_calib_batches
     ctx = mx.cpu() if args.gpu is None else mx.gpu(args.gpu)
-    topK = 10
+    topK = args.topk
 
     # prepare dataset
-    if not benchmark and not args.calibration:
-        logging.info('Prepare Dataset')
-        data = Dataset(args.path + args.dataset)
-        testRatings, testNegatives, max_user, max_movies = data.testRatings, data.testNegatives, data.num_users, data.num_items
-        logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
-                    %(max_user, max_movies, len(testRatings)))
-        logging.info('Prepare Dataset completed')
-    else:
+    if benchmark or calibration:
+        logging.info('Prepare movielens dataset')
         val_iter = get_movielens_iter(args.path + args.dataset + '/test-ratings.csv', batch_size, ctx=ctx, logger=logging)
-        max_user, max_movies = 138493, 26744
-    # construct the model
-    if args.deploy:
-        net, arg_params, aux_params = mx.model.load_checkpoint(args.prefix, args.epoch)
     else:
-        net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
-                        model_layers, num_hidden, max_user, max_movies, sparse)
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        model_path = os.path.join(dir_path, 'model', args.dataset)
-        save_dict = mx.nd.load(os.path.join(model_path, model_type) + "-%04d.params" % args.epoch)
-        arg_params = {}
-        aux_params = {}
-        for k, v in save_dict.items():
-            tp, name = k.split(':', 1)
-            if tp == 'arg':
-                arg_params[name] = v
-            if tp == 'aux':
-                aux_params[name] = v
-    if ctx == mx.cpu() and args.calibration:
+        logging.info('Prepare validation dataset')
+        data = NCFTestData(args.path + args.dataset)
+        testRatings, testNegatives= data.testRatings, data.testNegatives
+        logging.info("Load validation data done. #user=%d, #item=%d, #test=%d" 
+                    %(max_user, max_item, len(testRatings)))
+        logging.info('Prepare validation dataset completed')
+    
+    # construct the model
+    net, arg_params, aux_params = mx.model.load_checkpoint(args.prefix, args.epoch)
+    if ctx == mx.cpu() and calibration:
         net = net.get_backend_symbol('MKLDNN_QUANTIZE')
 
     # initialize the module
@@ -136,9 +124,9 @@ if __name__ == '__main__':
     mod.bind(for_training=False, data_shapes=provide_data, label_shapes=provide_label)
     mod.set_params(arg_params, aux_params)
 
-    if args.calibration:
-        excluded_sym_names = ['post_gemm_concat', 'fc_final']
+    if calibration:
         logging.info('Quantizing FP32 model')
+        excluded_sym_names = ['post_gemm_concat', 'fc_final']
         cqsym, cqarg_params, aux_params, collector = quantize_graph(sym=net, arg_params=arg_params, aux_params=aux_params,
                                                                     excluded_sym_names=excluded_sym_names,
                                                                     calib_mode=calib_mode,
@@ -155,30 +143,29 @@ if __name__ == '__main__':
                 break
         logging.info("Collected statistics from %d batches with batch_size=%d"
                     % (num_batches, batch_size))
-        print(collector.min_max_dict)
         cqsym, cqarg_params, aux_params = calib_graph(qsym=cqsym, arg_params=arg_params, aux_params=aux_params,
                                                       collector=collector, calib_mode=calib_mode,
                                                       quantized_dtype=args.quantized_dtype, logger=logging)                                                       
         sym_name = '%s-symbol.json' % (args.prefix + '-quantized')
         cqsym = cqsym.get_backend_symbol('MKLDNN_QUANTIZE')
         mx.model.save_checkpoint(args.prefix + '-quantized', args.epoch, cqsym, cqarg_params, aux_params)
+    elif benchmark:
+        logging.info('Benchmarking...')
+        num_samples = 0
+        for ib, batch in enumerate(val_iter):
+            if ib == 5:
+                num_samples = 0
+                tic = time.time()
+            mod.forward(batch, is_train=False)
+            mx.nd.waitall()
+            num_samples += batch_size
+        toc = time.time()
+        fps = num_samples/(toc - tic)
+        logging.info('Evaluating completed')
+        logging.info('Inference speed %.4f fps' % fps)
     else:
-        if benchmark:
-            logging.info('Benchmarking...')
-            num_samples = 0
-            for ib, batch in enumerate(val_iter):
-                if ib == 5:
-                    num_samples = 0
-                    tic = time.time()
-                mod.forward(batch, is_train=False)
-                mx.nd.waitall()
-                num_samples += batch_size
-            toc = time.time()
-            fps = num_samples/(toc - tic)
-            logging.info('Evaluating completed')
-            logging.info('Inference speed %.4f fps' % fps)
+        logging.info('Evaluating...')
+        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, batch_size, ctx, logging)
+        hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
+        logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))
 
-        else:
-            (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, batch_size, ctx, logging)
-            hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
-            logging.info('Evaluate: HR = %.4f, NDCG = %.4f'  % (hr, ndcg))

@@ -24,10 +24,11 @@ import math
 import random
 import numpy as np
 import mxnet as mx
-import multiprocessing as mp
-from Dataset import Dataset
+from mxnet import gluon
+from Dataset import NCFTrainData, NCFTestData
 from model import get_model
 from evaluate import *
+
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -43,6 +44,8 @@ parser.add_argument('--eval-batch-size', type=int, default=1000,
                     help='number of evaluate examples per batch')                  
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
+parser.add_argument('--num-negative', type=int, default=4,
+                    help="number of negative samples per positive sample while training.")
 parser.add_argument('--layers', default='[256, 128, 64]',
                     help="list of number hiddens of fc layers in mlp model.")
 parser.add_argument('--factor-size-gmf', type=int, default=64,
@@ -59,11 +62,15 @@ parser.add_argument('--beta2', '-b2', type=float, default=0.999,
                     help='beta1 for Adam')
 parser.add_argument('--eps', type=float, default=1e-8,
                     help='eps for Adam')
+parser.add_argument('--topk', type=int, default=4,
+                    help="topk for accuracy evaluation.")
 parser.add_argument('--gpu', type=int, default=None,
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
-parser.add_argument('--sparse', action='store_true', help="whether to use sparse embedding")
-parser.add_argument('--epoch', type=int, default=0, help='training epoch')
+parser.add_argument('--workers', type=int, default=8, help='thread number for dataloader.')
+parser.add_argument('--epoch', type=int, default=14, help='training epoch')
+parser.add_argument('--seed', type=int, default=3, help='random seed to use. Default=3.')
 parser.add_argument('--deploy', action='store_true', help="whether to load static graph for deployment")
+
 
 def cross_entropy(label, pred, eps=1e-12):
     ce = 0
@@ -79,6 +86,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.info(args)
 
+    mx.random.seed(args.seed)
+    np.random.seed(args.seed)
     batch_size = args.batch_size
     eval_batch_size = args.eval_batch_size
     model_type = args.model_type
@@ -90,32 +99,30 @@ if __name__ == '__main__':
     beta1=args.beta1
     beta2=args.beta2
     eps=args.eps
-    sparse = args.sparse
     ctx = mx.cpu() if args.gpu is None else mx.gpu(args.gpu)
-    topK = 10
-    num_negatives = 4
+    topK = args.topk
+    num_negatives = args.num_negative
+    num_workers = args.workers
     epoch = args.epoch
     log_interval = args.log_interval
 
     # prepare dataset
     logging.info('Prepare Dataset')
-    data = Dataset(args.path + args.dataset, is_train=True)
-    train, testRatings, testNegatives, max_user, max_movies = data.trainMatrix, data.testRatings, data.testNegatives, data.num_users, data.num_items
-    logging.info("Load training data done. #user=%d, #item=%d, #test=%d" 
-                %(max_user, max_movies, len(testRatings)))
-    train_iter = get_train_iters(train, num_negatives, batch_size, ctx)
+    train_dataset = NCFTrainData((args.path + args.dataset + '/train-ratings.csv'), num_negatives)
+    test_data = NCFTestData(args.path + args.dataset)
+    train_dataloader = mx.gluon.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, last_batch='rollover')
     logging.info('Prepare Dataset completed')
     # construct the model
     net = get_model(model_type, factor_size_mlp, factor_size_gmf, 
-                    model_layers, num_hidden, max_user, max_movies, sparse)
+                    model_layers, num_hidden, train_dataset.nb_users, train_dataset.nb_items)
 
     # initialize the module
-    
-    _, arg_params, aux_params = mx.model.load_checkpoint('./model3/ml-20m/neumf', 4)
     mod = mx.module.Module(net, context=ctx, data_names=['user', 'item'], label_names=['softmax_label'])
-    mod.bind(for_training=True, data_shapes=train_iter.provide_data, label_shapes=train_iter.provide_label)
-    # mod.init_params()
-    mod.set_params(arg_params, aux_params)
+    provide_data = [mx.io.DataDesc(name='item', shape=((batch_size,))),
+                    mx.io.DataDesc(name='user', shape=((batch_size,)))]
+    provide_label = [mx.io.DataDesc(name='softmax_label', shape=((batch_size,)))]
+    mod.bind(for_training=True, data_shapes=provide_data, label_shapes=provide_label)
+    mod.init_params()
     mod.init_optimizer(optimizer='adam', optimizer_params=[('learning_rate', learning_rate), ('beta1',beta1), ('beta2',beta2), ('epsilon',eps)])
     
     metric = mx.metric.create(cross_entropy)
@@ -124,13 +131,15 @@ if __name__ == '__main__':
     logging.info('Training started ...')
     for epoch in range(epoch):
         metric.reset()
-        train_iter = get_train_iters(train, num_negatives, batch_size, ctx)
-        for nbatch, batch in enumerate(train_iter):
+        for nbatch, seqs in enumerate(train_dataloader):
+            user_id, item_id, labels = seqs
+            batch = mx.io.DataBatch(data = [item_id.astype('int32').as_in_context(ctx),
+                                            user_id.astype('int32').as_in_context(ctx)],
+                                    label = [labels.as_in_context(ctx)])
             mod.forward(batch)
             mod.backward()
             mod.update()
             predicts=mod.get_outputs()[0]
-            labels=batch.label[0]
             metric.update(labels = labels, preds = predicts)
             speedometer_param = mx.model.BatchEndParam(epoch=epoch, nbatch=nbatch,
                                                        eval_metric=metric, locals=locals())
@@ -138,19 +147,17 @@ if __name__ == '__main__':
         
         # save model
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        model_path = os.path.join(dir_path, 'model3', args.dataset)
+        model_path = os.path.join(dir_path, 'model', args.dataset)
         if not os.path.exists(model_path):
             os.makedirs(model_path)
-        mod.save_checkpoint(os.path.join(model_path, model_type), epoch+5)
+        mod.save_checkpoint(os.path.join(model_path, model_type), epoch)
         # compute hit ratio
-        (hits, ndcgs) = evaluate_model(mod, testRatings, testNegatives, topK, eval_batch_size, ctx, logging)
+        (hits, ndcgs) = evaluate_model(mod, test_data.testRatings, test_data.testNegatives, topK, eval_batch_size, ctx, logging)
         hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
         logging.info('Iteration %d: HR = %.4f, NDCG = %.4f'  % (epoch, hr, ndcg))
         # best hit ratio
         if hr > best_hr:
             best_hr, best_ndcg, best_iter = hr, ndcg, epoch
-        # reset iterator
-        train_iter.reset()
 
     logging.info("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " % (best_iter, best_hr, best_ndcg))
     logging.info('Training completed.')

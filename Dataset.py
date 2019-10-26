@@ -18,24 +18,16 @@
 import scipy.sparse as sp
 import numpy as np
 import pandas as pd
+import mxnet as mx
 
-class Dataset(object):
-    '''
-    classdocs
-    '''
-
-    def __init__(self, path, is_train = False):
+class NCFTestData(object):
+    def __init__(self, path):
         '''
         Constructor
         '''
-        self.num_users = 138493
-        self.num_items = 26744
         self.testRatings = self.load_rating_file_as_list(path + "/test-ratings.csv")
         self.testNegatives = self.load_negative_file(path + "/test-negative.csv")
         assert len(self.testRatings) == len(self.testNegatives)
-        if is_train:
-            self.trainMatrix = self._load_train_matrix(path + "/train-ratings.csv")
-
 
     def load_rating_file_as_list(self, filename):
         ratingList = []
@@ -60,20 +52,53 @@ class Dataset(object):
                 negativeList.append(negatives)
                 line = f.readline()
         return negativeList
-    
-    def _load_train_matrix(self, filename):
+
+class NCFTrainData(mx.gluon.data.Dataset):
+    def __init__(self, train_fname, nb_neg):
+        self._load_train_matrix(train_fname)
+        self.nb_neg = nb_neg
+
+    def _load_train_matrix(self, train_fname):
         def process_line(line):
             tmp = line.split('\t')
             return [int(tmp[0]), int(tmp[1]), float(tmp[2]) > 0]
-        with open(filename, 'r') as file:
+        with open(train_fname, 'r') as file:
             data = list(map(process_line, file))
-        self.num_users = max(data, key=lambda x: x[0])[0] + 1
-        self.num_items = max(data, key=lambda x: x[1])[1] + 1
+        self.nb_users = max(data, key=lambda x: x[0])[0] + 1
+        self.nb_items = max(data, key=lambda x: x[1])[1] + 1
 
         self.data = list(filter(lambda x: x[2], data))
-        mat = sp.dok_matrix(
-                (self.num_users, self.num_items), dtype=np.float32)
+        self.mat = sp.dok_matrix(
+                (self.nb_users, self.nb_items), dtype=np.float32)
         for user, item, _ in data:
-            mat[user, item] = 1.
-        return mat
+            self.mat[user, item] = 1.
 
+    def __len__(self):
+        return (self.nb_neg + 1) * len(self.data)
+
+    def __getitem__(self, idx):
+        if idx % (self.nb_neg + 1) == 0:
+            idx = idx // (self.nb_neg + 1)
+            return self.data[idx][0], self.data[idx][1], np.ones(1, dtype=np.float32).item()  # noqa: E501
+        else:
+            idx = idx // (self.nb_neg + 1)
+            u = self.data[idx][0]
+            j = mx.random.randint(0, self.nb_items).asnumpy().item()
+            while (u, j) in self.mat:
+                j = mx.random.randint(0, self.nb_items).asnumpy().item()
+            return u, j, np.zeros(1, dtype=np.float32).item()
+
+def load_test_ratings(fname):
+    def process_line(line):
+        tmp = map(int, line.split('\t')[0:2])
+        return list(tmp)
+    ratings = map(process_line, open(fname, 'r'))
+    return list(ratings)
+
+
+def load_test_negs(fname):
+    def process_line(line):
+        tmp = map(int, line.split('\t'))
+        return list(tmp)
+    negs = map(process_line, open(fname, 'r'))
+    return list(negs)

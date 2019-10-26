@@ -42,44 +42,39 @@ test-negative.csv
 
 ## Pre-trained models
 
-We convert pre-trained NCF model from [MLPerf Pytorch version](https://github.com/mlperf/training/blob/948db9b11cdfa7d953769e53c560396f41617f1b/recommendation/pytorch/).
-
-Pre-trained Pytorch model can be get from [Google Drive](https://drive.google.com/drive/folders/1qACR_Zhc2O2W0RrazzcepM2vJeh0MMdO?usp=sharing) and you can convert it to MXNet by the following command.
-
-```
-python export/export.py
-```
-
-|dtype|HR|NDCG|
+|dtype|HR@10|NDCG@10|
 |:---:|:--:|:--:|
 |float32|0.6393|0.3849|
 |int8|0.6366|0.3824|
 
 ## Training
 
-TBD
+```
+# train ncf model with ml-20m dataset
+python train.py # --gpu=0
+```
 
 # Calibration
 
 ```
 # neumf calibration on ml-20m dataset
-python ncf.py --deploy --prefix=./model/ml-20m/neumf --calibration
+python ncf.py --prefix=./model/ml-20m/neumf --calibration
 ```
 
-## Inference
+## Evaluation
 
 ```
 # neumf float32 inference on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf
+python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf
 # neumf int8 inference on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized
+python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized
 ```
 
 ## Benchmark
 
 ```
 # neumf float32 benchmark on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf --benchmark
+python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf --benchmark
 # neumf int8 benchmark on ml-20m dataset
-python ncf.py --deploy --num-valid=138493 --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized --benchmark
+python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized --benchmark
 ```

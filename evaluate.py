@@ -53,37 +53,6 @@ def get_movielens_iter(filename, batch_size, ctx, logger):
     return iter
 
 
-def get_train_instances(train, num_negatives):
-    user_input, item_input, labels = [],[],[]
-    num_users, num_items = train.shape
-    for (u, i) in train.keys():
-        # positive instance
-        user_input.append(u)
-        item_input.append(i)
-        labels.append(1)
-        # negative instances
-        for t in range(num_negatives):
-            j = np.random.randint(num_items)
-            while (u,j) in train.keys():        
-                j = np.random.randint(num_items)
-            user_input.append(u)
-            item_input.append(j)
-            labels.append(0)
-    return user_input, item_input, labels
-
-def get_train_iters(train, num_negatives, batch_size, ctx):
-    user, item, label = get_train_instances(train, num_negatives)
-
-    user = mx.nd.array(user, dtype='int32').as_in_context(ctx)
-    item = mx.nd.array(item, dtype='int32').as_in_context(ctx)
-    label = mx.nd.array(label).as_in_context(ctx)
-    
-    data_train = {'user': user, 'item': item}
-    label_train = {'softmax_label': label}
-    iter_train = mx.io.NDArrayIter(data=data_train,label=label_train,
-                                   batch_size=batch_size, shuffle=True)
-    return mx.io.PrefetchingIter(iter_train)
-
 def predict(model, users, items, batch_size=1000, ctx=mx.cpu()):
     user = mx.nd.array(users, dtype='int32').as_in_context(ctx)
     item = mx.nd.array(items, dtype='int32').as_in_context(ctx)
