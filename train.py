@@ -61,7 +61,7 @@ parser.add_argument('--beta2', '-b2', type=float, default=0.999,
                     help='beta1 for Adam')
 parser.add_argument('--eps', type=float, default=1e-8,
                     help='eps for Adam')
-parser.add_argument('--topk', type=int, default=4,
+parser.add_argument('--topk', type=int, default=10,
                     help="topk for accuracy evaluation.")
 parser.add_argument('--gpu', type=int, default=None,
                     help="list of gpus to run, e.g. 0 or 0,2. empty means using cpu().")
