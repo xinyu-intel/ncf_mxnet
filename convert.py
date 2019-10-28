@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from load import implicit_load
+from core.load import implicit_load
 
 from mlperf_compliance import mlperf_log
 
