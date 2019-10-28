@@ -50,7 +50,7 @@ parser.add_argument('--factor-size-gmf', type=int, default=64,
                     help="outdim of gmf embedding layers.")
 parser.add_argument('--num-hidden', type=int, default=1,
                     help="num-hidden of neumf fc layer")
-parser.add_argument('--topk', type=int, default=10,
+parser.add_argument('--topk', type=int, default=4,
                     help="topk for accuracy evaluation.")
 parser.add_argument('--gpu', type=int, default=None,
                     help="index of gpu to run, e.g. 0 or 1. None means using cpu().")

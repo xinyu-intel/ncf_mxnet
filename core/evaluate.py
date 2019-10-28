@@ -16,6 +16,7 @@
 # under the License.
 # 
 import math
+import heapq
 import random
 import numpy as np
 import logging
@@ -59,13 +60,13 @@ def predict(model, users, items, batch_size=1000, ctx=mx.cpu()):
     data = {'user': user, 'item': item}
     label = {'softmax_label':label}
     eval_iter = mx.io.NDArrayIter(data=data, label=label, batch_size=batch_size)
-    preds = mx.nd.array([0])
+    preds = []
     for batch in eval_iter:
         model.forward(batch)
         mx.nd.waitall()
-        outp = model.get_outputs()[0]
-        preds = mx.nd.concat(preds,outp.reshape((-1)),num_args=2,dim=0)
-    return preds[1:preds.shape[0]]
+        outp = model.get_outputs()[0].asnumpy()
+        preds += list(outp.flatten())
+    return preds
 
 def _calculate_hit(ranked, test_item):
     return int(test_item in ranked)
@@ -83,7 +84,10 @@ def eval_one(rating, items, model, K, batch_size, ctx):
     items.append(test_item)
     users = [user] * len(items)
     predictions = predict(model, users, items, batch_size, ctx)
-    ranked = [items[i] for i in mx.nd.topk(predictions, k=K).asnumpy().astype('int32')]
+
+    map_item_score = {item: pred for item, pred in zip(items, predictions)}
+    ranked = heapq.nlargest(K, map_item_score, key=map_item_score.get)
+
     hit = _calculate_hit(ranked, test_item)
     ndcg = _calculate_ndcg(ranked, test_item)
     return hit, ndcg, len(predictions)
