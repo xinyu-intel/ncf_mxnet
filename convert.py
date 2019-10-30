@@ -20,27 +20,19 @@ import urllib
 import zipfile
 from argparse import ArgumentParser
 from collections import defaultdict
-
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
 from core.load import implicit_load
 
-from mlperf_compliance import mlperf_log
-
-
 MIN_RATINGS = 20
-
 
 USER_COLUMN = 'user_id'
 ITEM_COLUMN = 'item_id'
 
-
 TRAIN_RATINGS_FILENAME = 'train-ratings.csv'
 TEST_RATINGS_FILENAME = 'test-ratings.csv'
 TEST_NEG_FILENAME = 'test-negative.csv'
-
 
 def parse_args():
     parser = ArgumentParser()
@@ -75,7 +67,6 @@ def main():
 
     print("Filtering out users with less than {} ratings".format(MIN_RATINGS))
     grouped = df.groupby(USER_COLUMN)
-    mlperf_log.ncf_print(key=mlperf_log.PREPROC_HP_MIN_RATINGS, value=MIN_RATINGS)
     df = grouped.filter(lambda x: len(x) >= MIN_RATINGS)
 
     print("Mapping original user and item IDs to new sequential IDs")
@@ -105,16 +96,6 @@ def main():
 
     print("Generating {} negative samples for each user"
           .format(args.negatives))
-    mlperf_log.ncf_print(key=mlperf_log.PREPROC_HP_NUM_EVAL, value=args.negatives)
-
-    # The default of np.random.choice is replace=True
-    mlperf_log.ncf_print(key=mlperf_log.PREPROC_HP_SAMPLE_EVAL_REPLACEMENT, value=True)
-
-    #===========================================================================
-    #== First random operation triggers the clock start. =======================
-    #===========================================================================
-    mlperf_log.ncf_print(key=mlperf_log.RUN_START)
-    mlperf_log.ncf_print(key=mlperf_log.INPUT_STEP_EVAL_NEG_GEN)
 
     for user in tqdm(range(len(original_users)), desc='Users', total=len(original_users)):  # noqa: E501
         test_item = user_to_items[user].pop()
@@ -132,8 +113,6 @@ def main():
     df_train_ratings.to_csv(os.path.join(output, TRAIN_RATINGS_FILENAME),
                             index=False, header=False, sep='\t')
 
-    mlperf_log.ncf_print(key=mlperf_log.INPUT_SIZE, value=len(df_train_ratings))
-
     df_test_ratings = pd.DataFrame(test_ratings)
     df_test_ratings['fake_rating'] = 1
     df_test_ratings.to_csv(os.path.join(output, TEST_RATINGS_FILENAME),
@@ -142,7 +121,6 @@ def main():
     df_test_negs = pd.DataFrame(test_negs)
     df_test_negs.to_csv(os.path.join(output, TEST_NEG_FILENAME),
                         index=False, header=False, sep='\t')
-
 
 if __name__ == '__main__':
     main()
