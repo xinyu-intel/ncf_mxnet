@@ -1,9 +1,0 @@
-language: python
-python:
-  - "3.6"
-cache: pip
-install:
-  - pip install -r requirements.txt
-  - pip install --pre --upgrade mxnet-mkl
-script:
-  - python ci.py
