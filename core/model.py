@@ -49,13 +49,13 @@ def mlp_opt(user, item, factor_size, model_layers, max_user, max_item):
 
     for i in range(1, len(model_layers)):
         if i==1:
-            pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i))
+            pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i-1))
             continue
         else:
             mlp_weight_init = golorot_uniform(model_layers[i-1], model_layers[i])
-        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mlp_weight_init)
-        pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=model_layers[i], name='fc_'+str(i))
-        pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i))
+        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i-1), init=mlp_weight_init)
+        pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=model_layers[i], name='fc_'+str(i-1))
+        pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i-1))
 
     return pre_gemm_concat
 
@@ -70,9 +70,9 @@ def mlp(user, item, factor_size, model_layers, max_user, max_item):
 
     for i in range(1, len(model_layers)):
         mlp_weight_init = golorot_uniform(model_layers[i-1], model_layers[i])
-        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mlp_weight_init)
-        pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=model_layers[i], name='fc_'+str(i))
-        pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i))
+        mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i-1), init=mlp_weight_init)
+        pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=model_layers[i], name='fc_'+str(i-1))
+        pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i-1))
 
     return pre_gemm_concat
 

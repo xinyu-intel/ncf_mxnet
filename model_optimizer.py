@@ -37,7 +37,7 @@ parser.add_argument('--dataset', nargs='?', default='ml-20m',
 parser.add_argument('--model_parameters', type=str, default='./model/ml-20m/neumf-0007.params')
 parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
                     help="mdoel type")
-parser.add_argument('--layers', default='[256, 128, 64]',
+parser.add_argument('--layers', default='[256, 256, 128, 64]',
                     help="list of number hiddens of fc layers in mlp model.")
 parser.add_argument('--factor-size-gmf', type=int, default=64,
                     help="outdim of gmf embedding layers.")
