@@ -42,14 +42,6 @@ parser.add_argument('--max-item', type=int, default=26744,
                     help='max number of item index.')
 parser.add_argument('--batch-size', type=int, default=256,
                     help='number of examples per batch')
-parser.add_argument('--model-type', type=str, default='neumf', choices=['neumf', 'gmf', 'mlp'],
-                    help="mdoel type")
-parser.add_argument('--layers', default='[256, 128, 64]',
-                    help="list of number hiddens of fc layers in mlp model.")
-parser.add_argument('--factor-size-gmf', type=int, default=64,
-                    help="outdim of gmf embedding layers.")
-parser.add_argument('--num-hidden', type=int, default=1,
-                    help="num-hidden of neumf fc layer")
 parser.add_argument('--topk', type=int, default=10,
                     help="topk for accuracy evaluation.")
 parser.add_argument('--gpu', type=int, default=None,
@@ -85,11 +77,6 @@ if __name__ == '__main__':
     max_user = args.max_user
     max_item = args.max_item
     batch_size = args.batch_size
-    model_type = args.model_type
-    model_layers = eval(args.layers)
-    factor_size_gmf = args.factor_size_gmf
-    factor_size_mlp = int(model_layers[0]/2)
-    num_hidden = args.num_hidden
     benchmark = args.benchmark
     calibration = args.calibration
     calib_mode = args.calib_mode
@@ -129,7 +116,7 @@ if __name__ == '__main__':
         cqsym, cqarg_params, aux_params, collector = quantize_graph(sym=net, arg_params=arg_params, aux_params=aux_params,
                                                                     excluded_sym_names=excluded_sym_names,
                                                                     calib_mode=calib_mode,
-                                                                    quantized_dtype=args.quantized_dtype, logger=logging)
+                                                                    quantized_dtype=quantized_dtype, logger=logging)
         max_num_examples = num_calib_batches * batch_size
         mod._exec_group.execs[0].set_monitor_callback(collector.collect, monitor_all=True)
         num_batches = 0
@@ -144,7 +131,7 @@ if __name__ == '__main__':
                     % (num_batches, batch_size))
         cqsym, cqarg_params, aux_params = calib_graph(qsym=cqsym, arg_params=arg_params, aux_params=aux_params,
                                                       collector=collector, calib_mode=calib_mode,
-                                                      quantized_dtype=args.quantized_dtype, logger=logging)                                                       
+                                                      quantized_dtype=quantized_dtype, logger=logging)                                                       
         sym_name = '%s-symbol.json' % (args.prefix + '-quantized')
         cqsym = cqsym.get_backend_symbol('MKLDNN_QUANTIZE')
         mx.model.save_checkpoint(args.prefix + '-quantized', args.epoch, cqsym, cqarg_params, aux_params)

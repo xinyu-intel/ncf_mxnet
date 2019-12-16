@@ -47,13 +47,10 @@ def mlp(user, item, factor_size, model_layers, max_user, max_item):
                                   output_dim=factor_size, name='embed_item'+str(factor_size))
     pre_gemm_concat = mx.sym.concat(embed_user, embed_item, dim=1, name='pre_gemm_concat')
 
-    for i, layer in enumerate(model_layers):
-        if i==0:
-            mlp_weight_init = golorot_uniform(2 * factor_size, model_layers[i])
-        else:
-            mlp_weight_init = golorot_uniform(model_layers[i-1], model_layers[i])
+    for i in range(1, len(model_layers)):
+        mlp_weight_init = golorot_uniform(model_layers[i-1], model_layers[i])
         mlp_weight = mx.sym.Variable('fc_{}_weight'.format(i), init=mlp_weight_init)
-        pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=layer, name='fc_'+str(i))
+        pre_gemm_concat = mx.sym.FullyConnected(data=pre_gemm_concat, weight=mlp_weight, num_hidden=model_layers[i], name='fc_'+str(i))
         pre_gemm_concat = mx.sym.Activation(data=pre_gemm_concat, act_type='relu', name='act_'+str(i))
 
     return pre_gemm_concat
@@ -70,7 +67,7 @@ def gmf(user, item, factor_size, max_user, max_item):
     return pred
 
 def get_model(model_type='neumf', factor_size_mlp=128, factor_size_gmf=64,
-              model_layers=[256, 128, 64], num_hidden=1, 
+              model_layers=[256, 256, 128, 64], num_hidden=1, 
               max_user=138493, max_item=26744):
     # input
     user = mx.sym.Variable('user')
