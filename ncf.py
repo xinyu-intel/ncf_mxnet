@@ -47,7 +47,7 @@ parser.add_argument('--topk', type=int, default=10,
 parser.add_argument('--gpu', type=int, default=None,
                     help="index of gpu to run, e.g. 0 or 1. None means using cpu().")
 parser.add_argument('--benchmark', action='store_true',  help="whether to benchmark performance only")
-parser.add_argument('--epoch', type=int, default=0, help='model checkpoint index for inference')
+parser.add_argument('--epoch', type=int, default=7, help='model checkpoint index for inference')
 parser.add_argument('--prefix', default='./model/ml-20m/neumf', help="model checkpoint prefix")
 parser.add_argument('--calibration', action='store_true', help="whether to calibrate model")
 parser.add_argument('--calib-mode', type=str, choices=['naive', 'entropy'], default='naive',
@@ -136,6 +136,11 @@ if __name__ == '__main__':
         cqsym = cqsym.get_backend_symbol('MKLDNN_QUANTIZE')
         mx.model.save_checkpoint(args.prefix + '-quantized', args.epoch, cqsym, cqarg_params, aux_params)
     elif benchmark:
+        logging.info('Benchmarking...')
+        data = [mx.random.randint(0, 1000, shape=shape, ctx=ctx) for _, shape in mod.data_shapes]
+        batch = mx.io.DataBatch(data, []) # empty label
+        for i in range(2000):
+            mod.forward(batch, is_train=False)
         logging.info('Benchmarking...')
         num_samples = 0
         for ib, batch in enumerate(val_iter):

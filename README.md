@@ -66,7 +66,9 @@ We provide the pretrained ml-20m model on [Google Drive](https://drive.google.co
 |dtype|HR@10|NDCG@10|
 |:---:|:--:|:--:|
 |float32|0.6393|0.3849|
-|int8|0.6366|0.3824|
+|float32 opt|0.6393|0.3849|
+|int8|0.6395|0.3852|
+|int8 opt|0.6396|0.3852|
 
 ## Training
 
@@ -94,8 +96,14 @@ python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized
 ## Benchmark
 
 ```
+usage: bash ./benchmark.sh [[[-p prefix ] [-e epoch] [-d dataset] [-b batch_size] [-i instance] [-c cores/instance]] | [-h]]
+
 # neumf float32 benchmark on ml-20m dataset
-python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf --benchmark
+sh benchmark.sh -p model/ml-20m/neumf
+# optimized neumf float32 benchmark on ml-20m dataset
+sh benchmark.sh -p model/ml-20m/neumf-opt
 # neumf int8 benchmark on ml-20m dataset
-python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized --benchmark
+sh benchmark.sh -p model/ml-20m/neumf-quantized
+# optimized neumf int8 benchmark on ml-20m dataset
+sh benchmark.sh -p model/ml-20m/neumf-opt-quantized
 ```
