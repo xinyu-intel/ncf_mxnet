@@ -31,7 +31,7 @@ Code Reference: https://github.com/hexiangnan/neural_collaborative_filtering
 
 ## Environment Settings
 We use MXnet with MKL-DNN as the backend. 
-- MXNet version:  '1.5.1'
+- MXNet version:  MXNet Master(TBD)
 
 ## Install
 ```
@@ -77,11 +77,20 @@ We provide the pretrained ml-20m model on [Google Drive](https://drive.google.co
 python train.py # --gpu=0
 ```
 
+## Model Optimizer
+
+```
+# optimize nc model
+python model_optimizer.py
+```
+
 ## Calibration
 
 ```
 # neumf calibration on ml-20m dataset
 python ncf.py --prefix=./model/ml-20m/neumf --calibration
+# optimized neumf calibration on ml-20m dataset
+python ncf.py --prefix=./model/ml-20m/neumf-opt --calibration
 ```
 
 ## Evaluation
@@ -89,8 +98,12 @@ python ncf.py --prefix=./model/ml-20m/neumf --calibration
 ```
 # neumf float32 inference on ml-20m dataset
 python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf
+# optimized neumf float32 inference on ml-20m dataset
+python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf-opt
 # neumf int8 inference on ml-20m dataset
 python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf-quantized
+# optimized neumf int8 inference on ml-20m dataset
+python ncf.py --batch-size=1000 --prefix=./model/ml-20m/neumf-opt-quantized
 ```
 
 ## Benchmark

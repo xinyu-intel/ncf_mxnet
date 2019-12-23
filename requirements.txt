@@ -1,5 +1,6 @@
 mxnet-mkl>=1.5.1
 pandas
 numpy
+scipy
 tqdm
 nose
